@@ -1,0 +1,6 @@
+# IDE related
+/.idea/
+# virtual env related
+/.venv/
+# built-in database
+db.sqlite3

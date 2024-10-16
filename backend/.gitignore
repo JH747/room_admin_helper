@@ -4,3 +4,8 @@
 /.venv/
 # built-in database
 db.sqlite3
+# critical env
+.env
+
+*.pyc
+/__pycache__/

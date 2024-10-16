@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,8 +27,12 @@ SECRET_KEY = 'django-insecure-$lekx^$-h^r%x&7jgn6ahf-x2ak%@bl5lk44odokblleqzee*6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+## dev defined set
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1'
+]
+##
 
 # Application definition
 
@@ -38,11 +44,16 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    ## dev set
+
     'rest_framework',
+    'rest_framework.authtoken',
+
+
 ]
 
 MIDDLEWARE = [
+
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -106,9 +117,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'ko-kr' ##
+## dev defined set ##
+LANGUAGE_CODE = 'ko-kr'
 
-TIME_ZONE = 'Asia/Seoul' ##
+TIME_ZONE = 'Asia/Seoul'
+##
 
 USE_I18N = True
 
@@ -124,3 +137,16 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+## dev defined set ##
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
+
+
+SMTP_HOST = 'chess010905402.gmail.com'
+SMTP_PORT = 587
+SMTP_HOST_PASSWORD = config('SMTP_HOST_PASSWORD')

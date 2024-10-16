@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
 
+    'common'
 
 ]
 
@@ -146,7 +147,7 @@ REST_FRAMEWORK = {
     ]
 }
 
-
-SMTP_HOST = 'chess010905402.gmail.com'
+SMTP_HOST = 'smtp.gmail.com'
+SMTP_USER = 'chess010905402@gmail.com'
 SMTP_PORT = 587
-SMTP_HOST_PASSWORD = config('SMTP_HOST_PASSWORD')
+SMTP_PASSWORD = config('SMTP_PASSWORD')

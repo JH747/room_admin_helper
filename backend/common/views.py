@@ -1,10 +1,12 @@
 from django.contrib.auth.models import User
+from django.db import IntegrityError
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.authtoken.admin import Token
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_401_UNAUTHORIZED
 from common.models import EmailVerifyCodeModel
-from common.utils import send_email
+from common.utils import send_email, expire_outdated_codes
+
 
 # Create your views here.
 
@@ -24,18 +26,23 @@ def signup(request):
         password = request.data['pass']
         email = request.data['email']
         given_code = request.data['code']
-        right_code_ = EmailVerifyCodeModel.objects.filter(email=email)
 
+        expire_outdated_codes()
+        right_code_ = EmailVerifyCodeModel.objects.filter(email=email)
         if not right_code_.exists():
             return JsonResponse({'message': 'code expired or not sent'}, status=HTTP_400_BAD_REQUEST)
+
         right_code = right_code_.first().code
         if given_code != right_code:
             return JsonResponse({'message': 'wrong code'}, status=HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.create_user(username=username, password=password, email=email)
+            user.save()
+        except IntegrityError as e:
+            return JsonResponse({'message': 'duplicate username'}, status=HTTP_400_BAD_REQUEST)
+        Token.objects.create(user=user)
 
-        user = User.objects.create_user(username=username, password=password, email=email)
-        user.save()
-        Token.objects.create(user)
-        return JsonResponse({'message': 'signup success'}, status=200)
+        return JsonResponse({'message': 'signup success'}, status=HTTP_200_OK)
 
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=HTTP_400_BAD_REQUEST)

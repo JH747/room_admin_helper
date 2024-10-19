@@ -21,4 +21,5 @@ from api import views
 urlpatterns = [
     path('setyapen/', views.set_yapen, name='set_yapen'),
     path('setyogei/', views.set_yogei, name='set_yogei'),
+    path('retrieveinfo/', views.retrieve_info, name='retrieve_info'),
 ]

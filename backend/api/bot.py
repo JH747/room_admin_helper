@@ -8,11 +8,25 @@ import time
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-def bot_integrated():
+from api.models import PlatformInfoModel
+
+
+def bot_integrated(months, user):
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     driver.implicitly_wait(10)
 
-    bot_yapen(driver, 2)
+    months = int(months)
+    user_id = user.id
+    platform_info = PlatformInfoModel.objects.get(user_id=user_id)
+
+    info_yapen = bot_yapen(driver, months, platform_info)
+    info_yogei = bot_yogei(driver, months, platform_info)
+
+    driver.quit()
+
+    return
+
+
 
 def generate_url_yapen(year, month):
     # eg: https://ceo.yapen.co.kr/rev/inventory?setDate=2024-10
@@ -52,17 +66,17 @@ def get_one_month_yapen(session, year, month):
 
     return month_info
 
-def bot_yapen(driver, months):
+def bot_yapen(driver, months, platform_info):
     ## login
     driver.get('https://ceo.yapen.co.kr')
     id_input = driver.find_element(By.ID, "ceoID")
     pass_input = driver.find_element(By.ID, "ceoPW")
     login_button = driver.find_element(By.CLASS_NAME, "yapen-loginBtn")
-    id_input.send_keys("idhere")
-    pass_input.send_keys("passhere")
+    id_input.send_keys(platform_info.yapen_id)
+    pass_input.send_keys(platform_info.yapen_pass)
     login_button.click()
 
-    time.sleep(5)
+    time.sleep(10)
 
     ## hand over info to session
     session = requests.Session()
@@ -92,6 +106,7 @@ def generate_url_yogei(year, month):
 def get_one_month_yogei(driver, year, month):
     url = generate_url_yogei(year, month)
     driver.get(url)
+    time.sleep(10)
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml')
     days = soup.findAll('td', {'class': 'css-m6bnnw eg699vq6'})
@@ -100,14 +115,13 @@ def get_one_month_yogei(driver, year, month):
     for day in days:
         day_info = []
         date_str = day.find('span', {'class': 'eg699vq3'}).string
-        date_obj = datetime(year=year, month=month, day=date_str)
+        date_obj = datetime(year=year, month=month, day=int(date_str))
         rooms = day.findAll('div', {'class': 'css-11r9wyy e1n6gliz1'})
         if not rooms:
-            print('finished')
             continue
         for room in rooms:
             room_name = room.find('p', {'class': 'css-1jmeae7 e14u6bjd0'}).string
-            stat_parts = room.find('div', {'class': 'css-1k71jzs e1n6gliz0'}).findAll('span')
+            # stat_parts = room.find('div', {'class': 'css-1k71jzs e1n6gliz0'}).findAll('span')
             # reserved = stat_parts[0].string # 예약 0・
             # left = stat_parts[1].string # 잔여 1
             stats = room.find('div', {'class': 'css-12srjfc e14u6bjd1'})
@@ -126,25 +140,17 @@ def get_one_month_yogei(driver, year, month):
 
     return month_info
 
-def bot_yogei(driver, months):
+def bot_yogei(driver, months, platform_info):
     ## login
     driver.get('https://partner.goodchoice.kr/')
     id_input = driver.find_element(By.NAME, "userId")
     pass_input = driver.find_element(By.NAME, "password")
     login_button = driver.find_element(By.CLASS_NAME, "e1xz4bhj2")
-    id_input.send_keys("idhere")
-    pass_input.send_keys("passhere")
+    id_input.send_keys(platform_info.yogei_id)
+    pass_input.send_keys(platform_info.yogei_pass)
     login_button.click()
 
     time.sleep(5)
-
-    ## hand over info to session
-    session = requests.Session()
-    cookies = driver.get_cookies()
-    for cookie in cookies:
-        session.cookies.set(cookie["name"], cookie["value"])
-    user_agent = driver.execute_script("return navigator.userAgent")
-    session.headers['User-Agent'] = user_agent
 
     current_date = datetime.now()
     target_year = current_date.year
@@ -153,6 +159,7 @@ def bot_yogei(driver, months):
     info = []
     for i in range(months):
         target_month += 1
-        info.extend(get_one_month_yapen(session, target_year, target_month))
+        part = get_one_month_yogei(driver, target_year, target_month)
+        info.extend(part)
 
     return info

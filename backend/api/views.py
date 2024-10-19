@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
+from api.bot import bot_integrated
 from api.models import PlatformInfoModel
 
 
@@ -41,4 +42,12 @@ def set_yogei(request):
 
     return JsonResponse({'message': 'yogei setting success'}, status=HTTP_200_OK)
 
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def retrieve_info(request):
+    months = request.data['months']
+    user = request.user
+    bot_integrated(months=months, user=user)
 
+    return JsonResponse({'message': 'good'}, status=HTTP_200_OK)

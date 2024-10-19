@@ -28,12 +28,11 @@ def bot_integrated(months, user):
     info_yapen = bot_yapen(driver, months, platform_info)
     # print(info_yapen)
     info_yogei = bot_yogei(driver, months, platform_info)
-    print(info_yogei)
-    # driver.quit()
+    # print(info_yogei)
+    driver.quit()
 
 
-
-    return
+    return 'good result'
 
 
 

@@ -2,6 +2,9 @@ import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 import time
@@ -12,17 +15,23 @@ from api.models import PlatformInfoModel
 
 
 def bot_integrated(months, user):
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-    driver.implicitly_wait(10)
+    chrome_options = Options()
+    chrome_options.add_argument("--disable-notifications")
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    # implicitly waits for existence of every target element
+    driver.implicitly_wait(15)
 
     months = int(months)
     user_id = user.id
     platform_info = PlatformInfoModel.objects.get(user_id=user_id)
 
     info_yapen = bot_yapen(driver, months, platform_info)
+    # print(info_yapen)
     info_yogei = bot_yogei(driver, months, platform_info)
+    print(info_yogei)
+    # driver.quit()
 
-    driver.quit()
+
 
     return
 
@@ -75,8 +84,8 @@ def bot_yapen(driver, months, platform_info):
     id_input.send_keys(platform_info.yapen_id)
     pass_input.send_keys(platform_info.yapen_pass)
     login_button.click()
-
-    time.sleep(10)
+    # explicitly wait for user specific graph to be visible
+    WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.ID, "channelChart")))
 
     ## hand over info to session
     session = requests.Session()
@@ -106,7 +115,10 @@ def generate_url_yogei(year, month):
 def get_one_month_yogei(driver, year, month):
     url = generate_url_yogei(year, month)
     driver.get(url)
-    time.sleep(10)
+
+    WebDriverWait(driver, 15).until(expected_conditions.presence_of_all_elements_located((By.CLASS_NAME, "css-m6bnnw")))
+    # time.sleep(10)
+
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml')
     days = soup.findAll('td', {'class': 'css-m6bnnw eg699vq6'})
@@ -149,8 +161,14 @@ def bot_yogei(driver, months, platform_info):
     id_input.send_keys(platform_info.yogei_id)
     pass_input.send_keys(platform_info.yogei_pass)
     login_button.click()
-
-    time.sleep(5)
+    # driver.execute_script("""
+    #     var modal = document.getElementById('modal-root');
+    #     if (modal) {
+    #         modal.remove();
+    #     }
+    # """)
+    # explicitly wait for user specific accommodation name to be visible
+    WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-1cj511q")))
 
     current_date = datetime.now()
     target_year = current_date.year

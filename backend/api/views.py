@@ -4,7 +4,7 @@ from django.http import StreamingHttpResponse
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_201_CREATED
 
 from api.models import PlatformAuthInfoModel, PlatformRoomInfoModel
 from api.bot import bot_integrated
@@ -26,7 +26,7 @@ def test_view(request):
 
     return JsonResponse({'message': 'good'} )
 
-@api_view(['POST'])
+@api_view(['PUT'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def set_platform_auth(request):
@@ -54,9 +54,10 @@ def set_platform_auth(request):
         }
     )
     response_str = 'created' if created else 'updated'
-    return JsonResponse({'message': f'platform auth setting {response_str}'}, status=HTTP_200_OK)
+    return JsonResponse({'message': f'platform auth setting {response_str}'},
+                        status=HTTP_201_CREATED if created else HTTP_200_OK)
 
-@api_view(['POST'])
+@api_view(['PUT'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def set_room_name_list(request):
@@ -71,22 +72,24 @@ def set_room_name_list(request):
     room_name_instance, created = PlatformRoomInfoModel.objects.update_or_create(
         default_room_name=default_room_name,
         defaults={
-            display_order: display_order,
-            yapen_room_name: yapen_room_name,
-            yogei_room_name: yogei_room_name,
-            naver_room_name: naver_room_name,
-            bnb_room_name: bnb_room_name,
+            'user': user,
+            'display_order': display_order,
+            'yapen_room_name': yapen_room_name,
+            'yogei_room_name': yogei_room_name,
+            'naver_room_name': naver_room_name,
+            'bnb_room_name': bnb_room_name,
         }
     )
     response_str = 'created' if created else 'updated'
-    return JsonResponse({'message': f'platform room name setting {response_str}'}, status=HTTP_200_OK)
+    return JsonResponse({'message': f'platform room name setting {response_str}'},
+                        status=HTTP_201_CREATED if created else HTTP_200_OK)
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def retrieve_info(request):
-    start_date = datetime.strptime(request.data.get('start_date'), '%Y-%m-%d')
-    end_date = datetime.strptime(request.data.get('end_date'), '%Y-%m-%d')
+    start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
+    end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
     user = request.user
 
     result = None

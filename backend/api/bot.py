@@ -7,12 +7,9 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-import time
+from api.models import PlatformAuthInfoModel, PlatformRoomInfoModel
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-
-from api.models import PlatformInfoModel, PlatformRoomInfoModel
-
 
 def bot_integrated(user, start_date, end_date):
     chrome_options = Options()
@@ -22,7 +19,7 @@ def bot_integrated(user, start_date, end_date):
     driver.implicitly_wait(15)
 
     months = end_date.month - start_date.month + 1
-    platform_info = PlatformInfoModel.objects.get(user=user)
+    platform_info = PlatformAuthInfoModel.objects.get(user=user)
 
     info_yapen = bot_yapen(driver, start_date, months, platform_info)
     info_yogei = bot_yogei(driver, start_date, months, platform_info)
@@ -33,6 +30,8 @@ def bot_integrated(user, start_date, end_date):
     target_date = start_date
     platform_room_info = PlatformRoomInfoModel.objects.filter(user=user).order_by('display_order')
     room_names = platform_room_info.values_list('default_room_name', flat=True)
+
+    result = []
     while target_date <= end_date:
         day_yapen = info_yapen.get(target_date)
         day_yogei = info_yogei.get(target_date)
@@ -42,7 +41,7 @@ def bot_integrated(user, start_date, end_date):
             yapen_rn = platform_room_info_instance.yapen_room_name
             yogei_rn = platform_room_info_instance.yogei_room_name
 
-            ################################################################################
+            #################################################################################################
             # value of closed = num of platforms - 1
             # original status values
             # 0: onsale, 1: closed, 2: sold
@@ -56,7 +55,7 @@ def bot_integrated(user, start_date, end_date):
             # room_type4    3(sold)         -1(closed)      -1(closed)      -1(closed)      0(==0, ok)
             # room_type5    3(sold)         3(sold)         -1(closed)      -1(closed)      4(>0, overbooked)
 
-            ################################################################################
+            ##################################################################################################
 
             if yapen_rn:
                 if day_yapen.get(yapen_rn) == 1:
@@ -70,13 +69,15 @@ def bot_integrated(user, start_date, end_date):
                     reason_var += num_standard
 
             if reason_var >= num_platforms:
-                print('overbooked\t', target_date, '\t', room_name)
+                result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'overbooked', 'room_type': room_name})
+                # print('overbooked\t', target_date, '\t', room_name)
             elif reason_var > 0:
-                print('mismatch\t', target_date, '\t', room_name)
+                result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'mismatch', 'room_type': room_name})
+                # print('mismatch\t', target_date, '\t', room_name)
 
         target_date += timedelta(days=1)
 
-    return 'good result'
+    return result
 
 
 

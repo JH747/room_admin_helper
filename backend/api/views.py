@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 
-from api.models import PlatformInfoModel, PlatformRoomInfoModel
+from api.models import PlatformAuthInfoModel, PlatformRoomInfoModel
 from api.bot import bot_integrated
 
 from datetime import datetime
@@ -34,9 +34,9 @@ def set_yapen(request):
     yapen_pass = request.data['yapen_pass']
     user = request.user
 
-    info = PlatformInfoModel.objects.filter(user=user)
+    info = PlatformAuthInfoModel.objects.filter(user=user)
     if not info:
-        PlatformInfoModel.objects.create(user=user, yapen_id=yapen_id, yapen_pass=yapen_pass)
+        PlatformAuthInfoModel.objects.create(user=user, yapen_id=yapen_id, yapen_pass=yapen_pass)
     else:
         info.update(yapen_id=yapen_id, yapen_pass=yapen_pass)
 
@@ -50,9 +50,9 @@ def set_yogei(request):
     yogei_pass = request.data['yogei_pass']
     user = request.user
 
-    info = PlatformInfoModel.objects.filter(user=user)
+    info = PlatformAuthInfoModel.objects.filter(user=user)
     if not info:
-        PlatformInfoModel.objects.create(user=user, yogei_id=yogei_id, yogei_pass=yogei_pass)
+        PlatformAuthInfoModel.objects.create(user=user, yogei_id=yogei_id, yogei_pass=yogei_pass)
     else:
         info.update(yogei_id=yogei_id, yogei_pass=yogei_pass)
 

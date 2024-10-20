@@ -6,16 +6,24 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 
+from api.models import PlatformInfoModel, PlatformRoomInfoModel
 from api.bot import bot_integrated
-from api.models import PlatformInfoModel
 
 import threading
 import time
 import json
-import sys
-
 
 # Create your views here.
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def test_view(request):
+    els = PlatformRoomInfoModel.objects.filter(user=request.user)
+    for el in els:
+        print(el.default_room_name)
+
+    return JsonResponse({'message': 'good'} )
 
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])

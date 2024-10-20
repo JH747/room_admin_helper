@@ -13,3 +13,19 @@ class PlatformInfoModel(models.Model):
     naver_pass = models.CharField(max_length=50, blank=True, null=True)
     bnb_id = models.CharField(max_length=50, blank=True, null=True)
     bnb_pass = models.CharField(max_length=50, blank=True, null=True)
+
+
+
+class PlatformRoomInfoModel(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    display_order = models.IntegerField(blank=False, null=False)
+    default_room_name = models.CharField(max_length=50, blank=False, null=False, unique=True)
+    yapen_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    yogei_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    naver_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    bnb_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'display_order'], name='unique_display_order'),
+        ]

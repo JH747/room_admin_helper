@@ -8,10 +8,10 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 
-from api.models import PlatformInfoModel
+from api.models import PlatformInfoModel, PlatformRoomInfoModel
 
 
 def bot_integrated(months, user):
@@ -21,15 +21,36 @@ def bot_integrated(months, user):
     # implicitly waits for existence of every target element
     driver.implicitly_wait(15)
 
+    # TODO: 달 기준을 일 기준으로 교체, 혹은 기간으로 교체
     months = int(months)
-    user_id = user.id
-    platform_info = PlatformInfoModel.objects.get(user_id=user_id)
+    platform_info = PlatformInfoModel.objects.get(user=user)
+    start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    info_yapen = bot_yapen(driver, months, platform_info)
+    info_yapen = bot_yapen(driver, start_date, months, platform_info)
     # print(info_yapen)
-    info_yogei = bot_yogei(driver, months, platform_info)
+    info_yogei = bot_yogei(driver, start_date, months, platform_info)
     # print(info_yogei)
     driver.quit()
+
+    standard_var = 5
+    target_date = start_date
+    platform_room_info = PlatformRoomInfoModel.objects.filter(user=user).order_by('display_order')
+    room_names = platform_room_info.values_list('default_room_name', flat=True)
+    num_days = len(info_yapen)
+
+    for i in range(num_days):
+        day_yapen = info_yapen.get(target_date)
+        day_yogei = info_yogei.get(target_date)
+        for room_name in room_names:
+            platform_room_info_instance = platform_room_info.get(default_room_name=room_name)
+            reason_var = 0
+            reason_var += day_yapen.get(platform_room_info_instance.yapen_room_name)
+            reason_var += day_yogei.get(platform_room_info_instance.yogei_room_name)
+            print(room_name, '\t', reason_var)
+            if reason_var and reason_var != standard_var:
+                print(target_date, '\t', room_name, '\tyapen\t', day_yapen.get(platform_room_info_instance.yapen_room_name), '\tyogei\t', day_yogei.get(platform_room_info_instance.yogei_room_name))
+
+        target_date += timedelta(days=1)
 
 
     return 'good result'
@@ -47,11 +68,11 @@ def get_one_month_yapen(session, year, month):
     response = session.get(url)
     soup = BeautifulSoup(response.text, 'lxml')
     days = soup.findAll('table', attrs={"class": "roomListsTbl"})
-    month_info = []
+    month_info = {}
     for day in days:
         rooms = day.findAll("tr")
         date_obj = None
-        day_info = []
+        day_info = {}
 
         for room in rooms:
             stat_icon = room.find("span")
@@ -68,13 +89,13 @@ def get_one_month_yapen(session, year, month):
                     status = 0
                 elif stat_icon.string == '완':
                     status = 1
-                day_info.append({room_name_or_date.string: status})
+                day_info[room_name_or_date.string] = status
 
-        month_info.append({date_obj: day_info})
+        month_info[date_obj] = day_info
 
     return month_info
 
-def bot_yapen(driver, months, platform_info):
+def bot_yapen(driver, curr_date, months, platform_info):
     ## login
     driver.get('https://ceo.yapen.co.kr')
     id_input = driver.find_element(By.ID, "ceoID")
@@ -94,14 +115,13 @@ def bot_yapen(driver, months, platform_info):
     user_agent = driver.execute_script("return navigator.userAgent")
     session.headers['User-Agent'] = user_agent
 
-    current_date = datetime.now()
-    target_year = current_date.year
-    target_month = current_date.month
+    target_year = curr_date.year
+    target_month = curr_date.month
 
-    info = []
+    info = {}
     for i in range(months):
+        info.update(get_one_month_yapen(session, target_year, target_month))
         target_month += 1
-        info.extend(get_one_month_yapen(session, target_year, target_month))
 
     return info
 
@@ -122,9 +142,9 @@ def get_one_month_yogei(driver, year, month):
     soup = BeautifulSoup(html, 'lxml')
     days = soup.findAll('td', {'class': 'css-m6bnnw eg699vq6'})
 
-    month_info = []
+    month_info = {}
     for day in days:
-        day_info = []
+        day_info = {}
         date_str = day.find('span', {'class': 'eg699vq3'}).string
         date_obj = datetime(year=year, month=month, day=int(date_str))
         rooms = day.findAll('div', {'class': 'css-11r9wyy e1n6gliz1'})
@@ -145,13 +165,13 @@ def get_one_month_yogei(driver, year, month):
                 status = 0
             elif stat == '판매완료':
                 status = 1
-            day_info.append({room_name: status})
+            day_info[room_name] = status
 
-        month_info.append({date_obj: day_info})
+        month_info[date_obj] = day_info
 
     return month_info
 
-def bot_yogei(driver, months, platform_info):
+def bot_yogei(driver, curr_date, months, platform_info):
     ## login
     driver.get('https://partner.goodchoice.kr/')
     id_input = driver.find_element(By.NAME, "userId")
@@ -160,6 +180,7 @@ def bot_yogei(driver, months, platform_info):
     id_input.send_keys(platform_info.yogei_id)
     pass_input.send_keys(platform_info.yogei_pass)
     login_button.click()
+    ## disable popups - not necessary
     # driver.execute_script("""
     #     var modal = document.getElementById('modal-root');
     #     if (modal) {
@@ -169,14 +190,12 @@ def bot_yogei(driver, months, platform_info):
     # explicitly wait for user specific accommodation name to be visible
     WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-1cj511q")))
 
-    current_date = datetime.now()
-    target_year = current_date.year
-    target_month = current_date.month
+    target_year = curr_date.year
+    target_month = curr_date.month
 
-    info = []
+    info = {}
     for i in range(months):
+        info.update(get_one_month_yogei(driver, target_year, target_month))
         target_month += 1
-        part = get_one_month_yogei(driver, target_year, target_month)
-        info.extend(part)
 
     return info

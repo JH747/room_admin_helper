@@ -19,6 +19,7 @@ from django.urls import path
 from api import views
 
 urlpatterns = [
+    path('tester/', views.test_view, name='test_view'),
     path('setyapen/', views.set_yapen, name='set_yapen'),
     path('setyogei/', views.set_yogei, name='set_yogei'),
     path('retrieveinfo/', views.retrieve_info, name='retrieve_info'),

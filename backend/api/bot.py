@@ -14,44 +14,67 @@ from bs4 import BeautifulSoup
 from api.models import PlatformInfoModel, PlatformRoomInfoModel
 
 
-def bot_integrated(months, user):
+def bot_integrated(user, start_date, end_date):
     chrome_options = Options()
     chrome_options.add_argument("--disable-notifications")
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     # implicitly waits for existence of every target element
     driver.implicitly_wait(15)
 
-    # TODO: 달 기준을 일 기준으로 교체, 혹은 기간으로 교체
-    months = int(months)
+    months = end_date.month - start_date.month + 1
     platform_info = PlatformInfoModel.objects.get(user=user)
-    start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     info_yapen = bot_yapen(driver, start_date, months, platform_info)
-    # print(info_yapen)
     info_yogei = bot_yogei(driver, start_date, months, platform_info)
-    # print(info_yogei)
     driver.quit()
 
-    standard_var = 5
+    num_platforms = 2
+    num_standard = num_platforms-1
     target_date = start_date
     platform_room_info = PlatformRoomInfoModel.objects.filter(user=user).order_by('display_order')
     room_names = platform_room_info.values_list('default_room_name', flat=True)
-    num_days = len(info_yapen)
-
-    for i in range(num_days):
+    while target_date <= end_date:
         day_yapen = info_yapen.get(target_date)
         day_yogei = info_yogei.get(target_date)
         for room_name in room_names:
             platform_room_info_instance = platform_room_info.get(default_room_name=room_name)
             reason_var = 0
-            reason_var += day_yapen.get(platform_room_info_instance.yapen_room_name)
-            reason_var += day_yogei.get(platform_room_info_instance.yogei_room_name)
-            print(room_name, '\t', reason_var)
-            if reason_var and reason_var != standard_var:
-                print(target_date, '\t', room_name, '\tyapen\t', day_yapen.get(platform_room_info_instance.yapen_room_name), '\tyogei\t', day_yogei.get(platform_room_info_instance.yogei_room_name))
+            yapen_rn = platform_room_info_instance.yapen_room_name
+            yogei_rn = platform_room_info_instance.yogei_room_name
+
+            ################################################################################
+            # value of closed = num of platforms - 1
+            # original status values
+            # 0: onsale, 1: closed, 2: sold
+
+            #               platform_1      platform_2      platform_3      platform_4      total
+            # room_type1    -1(closed)      -1(closed)      2(sold)                         0(==0, ok)
+            # room_type2    0(open)         0(open)         0(open)                         0(==0, ok)
+            # room_type3    2(sold)         -1(closed)      0(open)                         1(>0, mismatch)
+            # room_type3    2(sold)         0(open)         0(open)                         2(>0, mismatch)
+            # room_type3    2(sold)         2(sold)         -1(closed)                      3(>0, overbooked)
+            # room_type4    3(sold)         -1(closed)      -1(closed)      -1(closed)      0(==0, ok)
+            # room_type5    3(sold)         3(sold)         -1(closed)      -1(closed)      4(>0, overbooked)
+
+            ################################################################################
+
+            if yapen_rn:
+                if day_yapen.get(yapen_rn) == 1:
+                    reason_var -= 1
+                elif day_yapen.get(yapen_rn) == 2:
+                    reason_var += num_standard
+            if yogei_rn:
+                if day_yogei.get(yogei_rn) == 1:
+                    reason_var -= 1
+                elif day_yogei.get(yogei_rn) == 2:
+                    reason_var += num_standard
+
+            if reason_var >= num_platforms:
+                print('overbooked\t', target_date, '\t', room_name)
+            elif reason_var > 0:
+                print('mismatch\t', target_date, '\t', room_name)
 
         target_date += timedelta(days=1)
-
 
     return 'good result'
 
@@ -84,11 +107,11 @@ def get_one_month_yapen(session, year, month):
                 date_str = room_name_or_date['for'].split('_')[1]
                 date_obj = datetime.strptime(date_str, '%Y-%m-%d')
             else:
-                status = 2
+                status = 1
                 if stat_icon.string == '가':
                     status = 0
                 elif stat_icon.string == '완':
-                    status = 1
+                    status = 2
                 day_info[room_name_or_date.string] = status
 
         month_info[date_obj] = day_info
@@ -158,13 +181,13 @@ def get_one_month_yogei(driver, year, month):
             stats = room.find('div', {'class': 'css-12srjfc e14u6bjd1'})
             stat = stats.contents[0].string
 
-            # 판매중   판매완료    마감
-            # 0       1         2
-            status = 2
+            # 판매중   마감    판매완료
+            # 0         1         2
+            status = 1
             if stat == '판매중':
                 status = 0
             elif stat == '판매완료':
-                status = 1
+                status = 2
             day_info[room_name] = status
 
         month_info[date_obj] = day_info

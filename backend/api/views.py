@@ -9,6 +9,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_IN
 from api.models import PlatformInfoModel, PlatformRoomInfoModel
 from api.bot import bot_integrated
 
+from datetime import datetime
 import threading
 import time
 import json
@@ -34,7 +35,7 @@ def set_yapen(request):
     user = request.user
 
     info = PlatformInfoModel.objects.filter(user=user)
-    if not info.exists():
+    if not info:
         PlatformInfoModel.objects.create(user=user, yapen_id=yapen_id, yapen_pass=yapen_pass)
     else:
         info.update(yapen_id=yapen_id, yapen_pass=yapen_pass)
@@ -50,7 +51,7 @@ def set_yogei(request):
     user = request.user
 
     info = PlatformInfoModel.objects.filter(user=user)
-    if not info.exists():
+    if not info:
         PlatformInfoModel.objects.create(user=user, yogei_id=yogei_id, yogei_pass=yogei_pass)
     else:
         info.update(yogei_id=yogei_id, yogei_pass=yogei_pass)
@@ -61,7 +62,8 @@ def set_yogei(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def retrieve_info(request):
-    months = request.data['months']
+    start_date = datetime.strptime(request.data.get('start_date'), '%Y-%m-%d')
+    end_date = datetime.strptime(request.data.get('end_date'), '%Y-%m-%d')
     user = request.user
 
     result = None
@@ -69,10 +71,10 @@ def retrieve_info(request):
     completed = threading.Event()
 
     def run_bot():
-        nonlocal result, err, completed, months, user
+        nonlocal result, err, completed, start_date, end_date, user
         try:
             # bot_integrated 실행 및 결과 저장
-            result = bot_integrated(months=months, user=user)
+            result = bot_integrated(user=user, start_date=start_date, end_date=end_date)
         except Exception as e:
             # 에러가 발생하면 에러 메시지 저장
             err = str(e)

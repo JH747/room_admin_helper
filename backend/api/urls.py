@@ -20,7 +20,7 @@ from api import views
 
 urlpatterns = [
     path('tester/', views.test_view, name='test_view'),
-    path('setyapen/', views.set_yapen, name='set_yapen'),
-    path('setyogei/', views.set_yogei, name='set_yogei'),
+    path('setplatformauth/', views.set_platform_auth, name='set_platform_auth'),
+    path('setroomnamelist/', views.set_room_name_list, name='set_room_name_list'),
     path('retrieveinfo/', views.retrieve_info, name='retrieve_info'),
 ]

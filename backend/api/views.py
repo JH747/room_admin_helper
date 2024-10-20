@@ -29,34 +29,57 @@ def test_view(request):
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def set_yapen(request):
-    yapen_id = request.data['yapen_id']
-    yapen_pass = request.data['yapen_pass']
+def set_platform_auth(request):
     user = request.user
+    yapen_id = request.data.get('yapen_id')
+    yapen_pass = request.data.get('yapen_pass')
+    yogei_id = request.data.get('yogei_id')
+    yogei_pass = request.data.get('yogei_pass')
+    naver_id = request.data.get('naver_id')
+    naver_pass = request.data.get('naver_pass')
+    bnb_id = request.data.get('bnb_id')
+    bnb_pass = request.data.get('bnb_pass')
 
-    info = PlatformAuthInfoModel.objects.filter(user=user)
-    if not info:
-        PlatformAuthInfoModel.objects.create(user=user, yapen_id=yapen_id, yapen_pass=yapen_pass)
-    else:
-        info.update(yapen_id=yapen_id, yapen_pass=yapen_pass)
-
-    return JsonResponse({'message': 'yapen setting success'}, status=HTTP_200_OK)
+    auth_info, created = PlatformAuthInfoModel.objects.update_or_create(
+        user=user,
+        defaults={
+            'yapen_id': yapen_id,
+            'yapen_pass': yapen_pass,
+            'yogei_id': yogei_id,
+            'yogei_pass': yogei_pass,
+            'naver_id': naver_id,
+            'naver_pass': naver_pass,
+            'bnb_id': bnb_id,
+            'bnb_pass': bnb_pass,
+        }
+    )
+    response_str = 'created' if created else 'updated'
+    return JsonResponse({'message': f'platform auth setting {response_str}'}, status=HTTP_200_OK)
 
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def set_yogei(request):
-    yogei_id = request.data['yogei_id']
-    yogei_pass = request.data['yogei_pass']
+def set_room_name_list(request):
     user = request.user
+    default_room_name = request.data.get('default_room_name')
+    display_order = request.data.get('display_order')
+    yapen_room_name = request.data.get('yapen_room_name')
+    yogei_room_name = request.data.get('yogei_room_name')
+    naver_room_name = request.data.get('naver_room_name')
+    bnb_room_name = request.data.get('bnb_room_name')
 
-    info = PlatformAuthInfoModel.objects.filter(user=user)
-    if not info:
-        PlatformAuthInfoModel.objects.create(user=user, yogei_id=yogei_id, yogei_pass=yogei_pass)
-    else:
-        info.update(yogei_id=yogei_id, yogei_pass=yogei_pass)
-
-    return JsonResponse({'message': 'yogei setting success'}, status=HTTP_200_OK)
+    room_name_instance, created = PlatformRoomInfoModel.objects.update_or_create(
+        default_room_name=default_room_name,
+        defaults={
+            display_order: display_order,
+            yapen_room_name: yapen_room_name,
+            yogei_room_name: yogei_room_name,
+            naver_room_name: naver_room_name,
+            bnb_room_name: bnb_room_name,
+        }
+    )
+    response_str = 'created' if created else 'updated'
+    return JsonResponse({'message': f'platform room name setting {response_str}'}, status=HTTP_200_OK)
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])

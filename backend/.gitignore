@@ -2,6 +2,7 @@
 /.idea/
 # virtual env related
 /.venv/
+/venv_wsl/
 # built-in database
 db.sqlite3
 # critical env

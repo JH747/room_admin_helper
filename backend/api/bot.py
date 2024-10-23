@@ -13,8 +13,13 @@ from dateutil.relativedelta import relativedelta
 from bs4 import BeautifulSoup
 
 def bot_integrated(user, start_date, end_date):
+    print('checkpoint1')
     chrome_options = Options()
+    chrome_options.add_argument("--no-sandbox")  # 리눅스 환경에서 필요할 수 있음
+    chrome_options.add_argument("--disable-dev-shm-usage")  # 메모리 부족 문제 해결
+    chrome_options.add_argument("--window-size=1920,1080")  # 적절한 화면 크기 설정
     chrome_options.add_argument("--disable-notifications")
+
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     # implicitly waits for existence of every target element
     driver.implicitly_wait(15)
@@ -139,9 +144,8 @@ def bot_yapen(driver, start_date, end_date, platform_info):
     id_input.send_keys(platform_info.yapen_id)
     pass_input.send_keys(platform_info.yapen_pass)
     login_button.click()
-    # explicitly wait for user specific graph to be visible
-    WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.ID, "channelChart")))
-
+    # explicitly wait for user specific graph to be present
+    WebDriverWait(driver, 15).until(expected_conditions.presence_of_element_located((By.ID, "channelChart")))
     ## hand over info to session
     session = requests.Session()
     cookies = driver.get_cookies()
@@ -171,7 +175,7 @@ def get_one_month_yogei(driver, target_date):
     driver.get(url)
 
     if month == datetime.now().month:
-        hide_previous_btn = WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-qdf8m4"))).find_element(By.TAG_NAME, 'button')
+        hide_previous_btn = WebDriverWait(driver, 15).until(expected_conditions.presence_of_element_located((By.CLASS_NAME, "css-qdf8m4"))).find_element(By.TAG_NAME, 'button')
         hide_previous_btn.click()
     WebDriverWait(driver, 15).until(expected_conditions.presence_of_all_elements_located((By.CLASS_NAME, "css-m6bnnw")))
 
@@ -225,8 +229,8 @@ def bot_yogei(driver, start_date, end_date, platform_info):
     #         modal.remove();
     #     }
     # """)
-    # explicitly wait for user specific accommodation name to be visible
-    WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-1cj511q")))
+    # explicitly wait for user specific accommodation name to be present
+    WebDriverWait(driver, 15).until(expected_conditions.presence_of_element_located((By.CLASS_NAME, "css-1cj511q")))
 
     target_date = start_date.replace(day=1)
     info = {}

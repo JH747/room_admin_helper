@@ -23,7 +23,7 @@ def bot_integrated(user, start_date, end_date):
 
     info_yapen = bot_yapen(driver, start_date, end_date, platform_info)
 
-    info_yogei = bot_yogei(driver, start_date, months, platform_info)
+    info_yogei = bot_yogei(driver, start_date, end_date, platform_info)
 
     driver.quit()
 
@@ -104,7 +104,7 @@ def get_one_month_yapen(session, target_date):
         day_info = {}
         for sibling in siblings:
 #             ['\n',
-#             < td class ="checkLayer" > < / td >,
+#             < td class ="checkLayer" > < / td >,  <-- this is sibling
 #             '\n',
 #             < td >
 #               < span class ="xIcon" > ／ < / span >
@@ -115,7 +115,6 @@ def get_one_month_yapen(session, target_date):
 #               < div class ="price" > 원 < / div >
 #             < / td >,
 #             '\n']
-#             rooms.append(tmp.parent.contents[0])
             room = sibling.parent.contents[3]
             stat_icon = room.find('span').get_text()
             room_name = room.find('label', recursive=False).contents[0].get_text(strip=True)
@@ -152,9 +151,7 @@ def bot_yapen(driver, start_date, end_date, platform_info):
     session.headers['User-Agent'] = user_agent
 
     target_date = start_date.replace(day=1)
-
     info = {}
-
     while target_date <= end_date:
         info.update(get_one_month_yapen(session, target_date))
         target_date += relativedelta(months=1)
@@ -162,40 +159,42 @@ def bot_yapen(driver, start_date, end_date, platform_info):
     return info
 
 def generate_url_yogei(year, month):
-    # eg: https://partner.goodchoice.kr/sales/product-start-stop?2024.10
     # eg: https://partner.goodchoice.kr/sales/status?date=2024.11
     param = f"date={year}.{month}"
     url = f"https://partner.goodchoice.kr/sales/status?{param}"
     return url
 
-def get_one_month_yogei(driver, year, month):
+def get_one_month_yogei(driver, target_date):
+    year = target_date.year
+    month = target_date.month
     url = generate_url_yogei(year, month)
     driver.get(url)
 
-    hide_former_btn = WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, "button.css-1s7juq8.es5gqx46")))
-    hide_former_btn.click()
+    if month == datetime.now().month:
+        hide_previous_btn = WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-qdf8m4"))).find_element(By.TAG_NAME, 'button')
+        hide_previous_btn.click()
     WebDriverWait(driver, 15).until(expected_conditions.presence_of_all_elements_located((By.CLASS_NAME, "css-m6bnnw")))
-    # time.sleep(10)
 
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml')
-    days = soup.findAll('td', {'class': 'css-m6bnnw eg699vq6'})
+    days = soup.find_all('td', {'class': 'css-m6bnnw eg699vq6'})
 
     month_info = {}
     for day in days:
         day_info = {}
         date_str = day.find('span', {'class': 'eg699vq3'}).string
         date_obj = datetime(year=year, month=month, day=int(date_str))
-        rooms = day.findAll('div', {'class': 'css-11r9wyy e1n6gliz1'})
+        rooms = day.find_all('div', {'class': 'css-17oiwyz e1n6gliz1'}) # shadowed
         if not rooms:
-            continue
+            rooms = day.find_all('div', {'class': 'css-11r9wyy e1n6gliz1'}) # not shadowed
+
         for room in rooms:
-            room_name = room.find('p', {'class': 'css-1jmeae7 e14u6bjd0'}).string
+            room_name = room.find('p', {'class': 'css-1jmeae7 e18j92hw0'}).string
             # stat_parts = room.find('div', {'class': 'css-1k71jzs e1n6gliz0'}).findAll('span')
             # reserved = stat_parts[0].string # 예약 0・
             # left = stat_parts[1].string # 잔여 1
-            stats = room.find('div', {'class': 'css-12srjfc e14u6bjd1'})
-            stat = stats.contents[0].string
+            stats = room.find('div', {'class': 'css-12srjfc e18j92hw1'})
+            stat = stats.contents[0].get_text()
 
             # 판매중   마감    판매완료
             # 0         1         2
@@ -210,7 +209,7 @@ def get_one_month_yogei(driver, year, month):
 
     return month_info
 
-def bot_yogei(driver, curr_date, months, platform_info):
+def bot_yogei(driver, start_date, end_date, platform_info):
     ## login
     driver.get('https://partner.goodchoice.kr/')
     id_input = driver.find_element(By.NAME, "userId")
@@ -229,12 +228,10 @@ def bot_yogei(driver, curr_date, months, platform_info):
     # explicitly wait for user specific accommodation name to be visible
     WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-1cj511q")))
 
-    target_year = curr_date.year
-    target_month = curr_date.month
-
+    target_date = start_date.replace(day=1)
     info = {}
-    for i in range(months):
-        info.update(get_one_month_yogei(driver, target_year, target_month))
-        target_month += 1
+    while target_date <= end_date:
+        info.update(get_one_month_yogei(driver, target_date))
+        target_date += relativedelta(months=1)
 
     return info

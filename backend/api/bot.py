@@ -9,6 +9,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from api.models import PlatformAuthInfoModel, PlatformRoomInfoModel
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from bs4 import BeautifulSoup
 
 def bot_integrated(user, start_date, end_date):
@@ -18,11 +19,12 @@ def bot_integrated(user, start_date, end_date):
     # implicitly waits for existence of every target element
     driver.implicitly_wait(15)
 
-    months = end_date.month - start_date.month + 1
     platform_info = PlatformAuthInfoModel.objects.get(user=user)
 
-    info_yapen = bot_yapen(driver, start_date, months, platform_info)
+    info_yapen = bot_yapen(driver, start_date, end_date, platform_info)
+
     info_yogei = bot_yogei(driver, start_date, months, platform_info)
+
     driver.quit()
 
     num_platforms = 2
@@ -54,7 +56,6 @@ def bot_integrated(user, start_date, end_date):
             # room_type3    2(sold)         2(sold)         -1(closed)                      3(>0, overbooked)
             # room_type4    3(sold)         -1(closed)      -1(closed)      -1(closed)      0(==0, ok)
             # room_type5    3(sold)         3(sold)         -1(closed)      -1(closed)      4(>0, overbooked)
-
             ##################################################################################################
 
             if yapen_rn:
@@ -79,47 +80,58 @@ def bot_integrated(user, start_date, end_date):
 
     return result
 
-
-
 def generate_url_yapen(year, month):
-    # eg: https://ceo.yapen.co.kr/rev/inventory?setDate=2024-10
+    # eg: https://ceo.yapen.co.kr/rev/calendar?setDate=2024-10
     param = f"setDate={year}-{month}"
-    url = f"https://ceo.yapen.co.kr/rev/inventory?{param}"
+    url = f"https://ceo.yapen.co.kr/rev/calendar?{param}"
     return url
 
-def get_one_month_yapen(session, year, month):
+def get_one_month_yapen(session, target_date):
+    year = target_date.year
+    month = target_date.month
     url = generate_url_yapen(year, month)
+
     response = session.get(url)
     soup = BeautifulSoup(response.text, 'lxml')
-    days = soup.findAll('table', attrs={"class": "roomListsTbl"})
+    days = soup.find_all('table', attrs={"class": "roomListsTbl"})
+
     month_info = {}
     for day in days:
-        rooms = day.findAll("tr")
-        date_obj = None
+        date_str = day.parent.find('div', attrs={"class": "dayTitle"}).find('b').string
+        date_obj = datetime(year=year, month=month, day=int(date_str))
+
+        siblings = day.find_all('td', attrs={"class": "checkLayer"})
         day_info = {}
+        for sibling in siblings:
+#             ['\n',
+#             < td class ="checkLayer" > < / td >,
+#             '\n',
+#             < td >
+#               < span class ="xIcon" > ／ < / span >
+#               < label class ="roomMemoView" data-revdate="2024-10-01" id="roomMemo_205176377" style="" >
+#                   커플스탠다드 - 1(강조망X)
+#                   < div class ="resSubInfoWrap"> ... many sub elements ... < / div >
+#               < / label >
+#               < div class ="price" > 원 < / div >
+#             < / td >,
+#             '\n']
+#             rooms.append(tmp.parent.contents[0])
+            room = sibling.parent.contents[3]
+            stat_icon = room.find('span').get_text()
+            room_name = room.find('label', recursive=False).contents[0].get_text(strip=True)
 
-        for room in rooms:
-            stat_icon = room.find("span")
-            room_name_or_date = room.find("label")
-
-            if stat_icon is None:
-                if room_name_or_date is None:
-                    continue
-                date_str = room_name_or_date['for'].split('_')[1]
-                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-            else:
-                status = 1
-                if stat_icon.string == '가':
-                    status = 0
-                elif stat_icon.string == '완':
-                    status = 2
-                day_info[room_name_or_date.string] = status
+            status = 1
+            if stat_icon == '가':
+                status = 0
+            elif stat_icon == '완':
+                status = 2
+            day_info[room_name] = status
 
         month_info[date_obj] = day_info
 
     return month_info
 
-def bot_yapen(driver, curr_date, months, platform_info):
+def bot_yapen(driver, start_date, end_date, platform_info):
     ## login
     driver.get('https://ceo.yapen.co.kr')
     id_input = driver.find_element(By.ID, "ceoID")
@@ -139,26 +151,29 @@ def bot_yapen(driver, curr_date, months, platform_info):
     user_agent = driver.execute_script("return navigator.userAgent")
     session.headers['User-Agent'] = user_agent
 
-    target_year = curr_date.year
-    target_month = curr_date.month
+    target_date = start_date.replace(day=1)
 
     info = {}
-    for i in range(months):
-        info.update(get_one_month_yapen(session, target_year, target_month))
-        target_month += 1
+
+    while target_date <= end_date:
+        info.update(get_one_month_yapen(session, target_date))
+        target_date += relativedelta(months=1)
 
     return info
 
 def generate_url_yogei(year, month):
     # eg: https://partner.goodchoice.kr/sales/product-start-stop?2024.10
+    # eg: https://partner.goodchoice.kr/sales/status?date=2024.11
     param = f"date={year}.{month}"
-    url = f"https://partner.goodchoice.kr/sales/product-start-stop?{param}"
+    url = f"https://partner.goodchoice.kr/sales/status?{param}"
     return url
 
 def get_one_month_yogei(driver, year, month):
     url = generate_url_yogei(year, month)
     driver.get(url)
 
+    hide_former_btn = WebDriverWait(driver, 15).until(expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, "button.css-1s7juq8.es5gqx46")))
+    hide_former_btn.click()
     WebDriverWait(driver, 15).until(expected_conditions.presence_of_all_elements_located((By.CLASS_NAME, "css-m6bnnw")))
     # time.sleep(10)
 

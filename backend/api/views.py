@@ -90,6 +90,7 @@ def set_room_name_list(request):
 def retrieve_info(request):
     start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
     end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
+    detector_mode = True if request.query_params.get('detector_mode') == 'yes' else False
     user = request.user
 
     result = None
@@ -97,10 +98,10 @@ def retrieve_info(request):
     completed = threading.Event()
 
     def run_bot():
-        nonlocal result, err, completed, start_date, end_date, user
+        nonlocal result, err, completed, start_date, end_date, detector_mode, user
         try:
             # bot_integrated 실행 및 결과 저장
-            result = bot_integrated(user=user, start_date=start_date, end_date=end_date)
+            result = bot_integrated(user=user, start_date=start_date, end_date=end_date, detector_mode=detector_mode)
         except Exception as e:
             # 에러가 발생하면 에러 메시지 저장
             err = str(e)

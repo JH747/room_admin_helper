@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from bs4 import BeautifulSoup
 
-def bot_integrated(user, start_date, end_date):
+def bot_integrated(user, start_date, end_date, detector_mode):
     print('checkpoint1')
     chrome_options = Options()
     chrome_options.add_argument("--no-sandbox")  # 리눅스 환경에서 필요할 수 있음
@@ -31,6 +31,12 @@ def bot_integrated(user, start_date, end_date):
     info_yogei = bot_yogei(driver, start_date, end_date, platform_info)
 
     driver.quit()
+
+    if not detector_mode:
+        result = {}
+        result['yapen'] = info_yapen
+        result['yogei'] = info_yogei
+        return result
 
     num_platforms = 2
     num_standard = num_platforms-1

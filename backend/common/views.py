@@ -52,8 +52,10 @@ def login(request):
     try:
         username = request.data['id']
         password = request.data['pass']
-        user = User.objects.get(username=username)
-
+        user = User.objects.filter(username=username)
+        if not user.exists():
+            return JsonResponse({'message': 'wrong id'}, status=HTTP_401_UNAUTHORIZED)
+        user = user.first()
         if user.check_password(password):
             token = Token.objects.get(user=user)
             return JsonResponse({'token': token.key}, status=HTTP_200_OK)

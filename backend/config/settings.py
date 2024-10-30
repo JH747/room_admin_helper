@@ -37,13 +37,14 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
 
     'rest_framework',
     'rest_framework.authtoken',
@@ -53,7 +54,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-
+    'corsheaders.middleware.CorsMiddleware',
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -151,3 +152,9 @@ SMTP_HOST = 'smtp.gmail.com'
 SMTP_USER = 'chess010905402@gmail.com'
 SMTP_PORT = 587
 SMTP_PASSWORD = config('SMTP_PASSWORD')
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+CORS_ALLOW_CREDENTIALS = True

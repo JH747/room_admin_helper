@@ -18,14 +18,6 @@ class SetStandardRoomInfoSerializer(serializers.ModelSerializer):
         return data
 
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    standard_room_info = models.ForeignKey(StandardRoomInfoModel, on_delete=models.CASCADE)
-    yapen_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    yogei_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    naver_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    bnb_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-
-
 class SetRoomInfoSerializer(serializers.ModelSerializer):
     standard_room_info_id = serializers.IntegerField(source='standard_room_info_id', required=True)
     yapen_room_name = serializers.CharField(source='yapen_room_name')

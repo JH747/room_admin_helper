@@ -7,7 +7,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-from api.models import PlatformAuthInfoModel, PlatformRoomInfoModel
+from api.models import PlatformAuthInfoModel, PlatformRoomInfoModel, StandardRoomInfoModel, RoomInfoModel
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from bs4 import BeautifulSoup
@@ -38,58 +38,92 @@ def bot_integrated(user, start_date, end_date, detector_mode):
         result['yogei'] = info_yogei
         return result
 
-    num_platforms = 2
-    num_standard = num_platforms-1
-    target_date = start_date
-    platform_room_info = PlatformRoomInfoModel.objects.filter(user=user).order_by('display_order')
-    room_names = platform_room_info.values_list('default_room_name', flat=True)
-
     result = []
+    target_date = start_date
+    standard_room_infos = StandardRoomInfoModel.objects.filter(user=user).order_by('display_order')
     while target_date <= end_date:
         day_yapen = info_yapen.get(target_date)
         day_yogei = info_yogei.get(target_date)
-        for room_name in room_names:
-            platform_room_info_instance = platform_room_info.get(default_room_name=room_name)
-            reason_var = 0
-            yapen_rn = platform_room_info_instance.yapen_room_name
-            yogei_rn = platform_room_info_instance.yogei_room_name
+        for standard_room_info in standard_room_infos:
+            standard_room_name = standard_room_info.standard_room_name
+            platform_room_infos = RoomInfoModel.objects.filter(standard_room_info = standard_room_info)
+            booked = 0
+            for platform_room_info in platform_room_infos:
+                yapen_rn = platform_room_info.yapen_room_name
+                yogei_rn = platform_room_info.yogei_room_name
+                if yapen_rn:
+                    if day_yapen.get(yapen_rn) == 2:
+                        booked += 1
+                if yogei_rn:
+                    if day_yogei.get(yogei_rn) == 2:
+                        booked += 1
+                if yogei_rn and yogei_rn:
+                    if day_yapen.get(yapen_rn) == 2 and day_yogei.get(yogei_rn) == 2:
+                        result.append({'date': target_date.strftime('%Y-%m-%d'),
+                                       'problem': 'mismatch',
+                                       'room_type': standard_room_name})
+                        print('mismatch\t', target_date, '\t', standard_room_name)
 
-            #################################################################################################
-            # value of closed = num of platforms - 1
-            # original status values
-            # 0: onsale, 1: closed, 2: sold
-
-            #               platform_1      platform_2      platform_3      platform_4      total
-            # room_type1    -1(closed)      -1(closed)      2(sold)                         0(==0, ok)
-            # room_type2    0(open)         0(open)         0(open)                         0(==0, ok)
-            # room_type3    2(sold)         -1(closed)      0(open)                         1(>0, mismatch)
-            # room_type3    2(sold)         0(open)         0(open)                         2(>0, mismatch)
-            # room_type3    2(sold)         2(sold)         -1(closed)                      3(>0, overbooked)
-            # room_type4    3(sold)         -1(closed)      -1(closed)      -1(closed)      0(==0, ok)
-            # room_type5    3(sold)         3(sold)         -1(closed)      -1(closed)      4(>0, overbooked)
-            ##################################################################################################
-
-            if yapen_rn:
-                if day_yapen.get(yapen_rn) == 1:
-                    reason_var -= 1
-                elif day_yapen.get(yapen_rn) == 2:
-                    reason_var += num_standard
-            if yogei_rn:
-                if day_yogei.get(yogei_rn) == 1:
-                    reason_var -= 1
-                elif day_yogei.get(yogei_rn) == 2:
-                    reason_var += num_standard
-
-            if reason_var >= num_platforms:
-                result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'overbooked', 'room_type': room_name})
-                # print('overbooked\t', target_date, '\t', room_name)
-            elif reason_var > 0:
-                result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'mismatch', 'room_type': room_name})
-                # print('mismatch\t', target_date, '\t', room_name)
+            if booked > standard_room_info.room_quantity:
+                result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'overbooked', 'room_type': standard_room_name})
+                print('overbooked\t', target_date, '\t', standard_room_name)
 
         target_date += timedelta(days=1)
 
     return result
+
+    # num_platforms = 2
+    # num_standard = num_platforms-1
+    # target_date = start_date
+    # platform_room_info = PlatformRoomInfoModel.objects.filter(user=user).order_by('display_order')
+    # room_names = platform_room_info.values_list('default_room_name', flat=True)
+    #
+    # result = []
+    # while target_date <= end_date:
+    #     day_yapen = info_yapen.get(target_date)
+    #     day_yogei = info_yogei.get(target_date)
+    #     for room_name in room_names:
+    #         platform_room_info_instance = platform_room_info.get(default_room_name=room_name)
+    #         reason_var = 0
+    #         yapen_rn = platform_room_info_instance.yapen_room_name
+    #         yogei_rn = platform_room_info_instance.yogei_room_name
+    #
+    #         #################################################################################################
+    #         # value of closed = num of platforms - 1
+    #         # original status values
+    #         # 0: onsale, 1: closed, 2: sold
+    #
+    #         #               platform_1      platform_2      platform_3      platform_4      total
+    #         # room_type1    -1(closed)      -1(closed)      2(sold)                         0(==0, ok)
+    #         # room_type2    0(open)         0(open)         0(open)                         0(==0, ok)
+    #         # room_type3    2(sold)         -1(closed)      0(open)                         1(>0, mismatch)
+    #         # room_type3    2(sold)         0(open)         0(open)                         2(>0, mismatch)
+    #         # room_type3    2(sold)         2(sold)         -1(closed)                      3(>0, overbooked)
+    #         # room_type4    3(sold)         -1(closed)      -1(closed)      -1(closed)      0(==0, ok)
+    #         # room_type5    3(sold)         3(sold)         -1(closed)      -1(closed)      4(>0, overbooked)
+    #         ##################################################################################################
+    #
+    #         if yapen_rn:
+    #             if day_yapen.get(yapen_rn) == 1:
+    #                 reason_var -= 1
+    #             elif day_yapen.get(yapen_rn) == 2:
+    #                 reason_var += num_standard
+    #         if yogei_rn:
+    #             if day_yogei.get(yogei_rn) == 1:
+    #                 reason_var -= 1
+    #             elif day_yogei.get(yogei_rn) == 2:
+    #                 reason_var += num_standard
+    #
+    #         if reason_var >= num_platforms:
+    #             result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'overbooked', 'room_type': room_name})
+    #             # print('overbooked\t', target_date, '\t', room_name)
+    #         elif reason_var > 0:
+    #             result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'mismatch', 'room_type': room_name})
+    #             # print('mismatch\t', target_date, '\t', room_name)
+    #
+    #     target_date += timedelta(days=1)
+    #
+    # return result
 
 def generate_url_yapen(year, month):
     # eg: https://ceo.yapen.co.kr/rev/calendar?setDate=2024-10

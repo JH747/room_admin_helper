@@ -5,14 +5,18 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_201_CREATED
+from rest_framework.views import APIView
 
-from api.models import PlatformAuthInfoModel, PlatformRoomInfoModel
+from api.models import PlatformAuthInfoModel, PlatformRoomInfoModel, StandardRoomInfoModel, RoomInfoModel
 from api.bot import bot_integrated
 
 from datetime import datetime
 import threading
 import time
 import json
+
+from common.serializers import SetStandardRoomInfoSerializer, SetRoomInfoSerializer
+
 
 # Create your views here.
 
@@ -24,7 +28,7 @@ def test_view(request):
     for el in els:
         print(el.default_room_name)
 
-    return JsonResponse({'message': 'good'} )
+    return JsonResponse({'message': 'good'})
 
 @api_view(['PUT'])
 @authentication_classes([TokenAuthentication])
@@ -57,32 +61,55 @@ def set_platform_auth(request):
     return JsonResponse({'message': f'platform auth setting {response_str}'},
                         status=HTTP_201_CREATED if created else HTTP_200_OK)
 
-@api_view(['PUT'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def set_room_name_list(request):
-    user = request.user
-    default_room_name = request.data.get('default_room_name')
-    display_order = request.data.get('display_order')
-    yapen_room_name = request.data.get('yapen_room_name')
-    yogei_room_name = request.data.get('yogei_room_name')
-    naver_room_name = request.data.get('naver_room_name')
-    bnb_room_name = request.data.get('bnb_room_name')
+class SetStandardRoomInfoView(APIView):
+    def get(self, request):
+        user = request.user
+        target_standard_room_infos = StandardRoomInfoModel.objects.filter(user=user)
+        response_data = SetStandardRoomInfoSerializer(target_standard_room_infos, many=True).data
+        return JsonResponse(response_data, status=HTTP_200_OK)
 
-    room_name_instance, created = PlatformRoomInfoModel.objects.update_or_create(
-        default_room_name=default_room_name,
-        defaults={
-            'user': user,
-            'display_order': display_order,
-            'yapen_room_name': yapen_room_name,
-            'yogei_room_name': yogei_room_name,
-            'naver_room_name': naver_room_name,
-            'bnb_room_name': bnb_room_name,
-        }
-    )
-    response_str = 'created' if created else 'updated'
-    return JsonResponse({'message': f'platform room name setting {response_str}'},
-                        status=HTTP_201_CREATED if created else HTTP_200_OK)
+    def post(self, request):
+        user = request.user
+        serializer = SetStandardRoomInfoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        standard_room_name = serializer.validated_data['standard_room_name']
+        display_order = serializer.validated_data['display_order']
+        room_quantity = serializer.validated_data['room_quantity']
+        StandardRoomInfoModel.objects.create(user=user, standard_room_name=standard_room_name, display_order=display_order, room_quantity=room_quantity)
+        return JsonResponse({'message': 'successfully created'}, status=HTTP_201_CREATED)
+
+    def delete(self, request):
+        user = request.user
+        standard_room_info_id = request.data.get('standard_room_info_id')
+        StandardRoomInfoModel.objects.get(id=standard_room_info_id).delete()
+        return JsonResponse({'message': 'successfully deleted'}, status=HTTP_200_OK)
+
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+class SetRoomInfoView(APIView):
+    def get(self, request):
+        user = request.user
+        target_room_infos = RoomInfoModel.objects.filter(user=user)
+        response_data = SetRoomInfoSerializer(target_room_infos, many=True).data
+        return JsonResponse(response_data, status=HTTP_200_OK)
+
+    def post(self, request):
+        user = request.user
+        serializer = SetRoomInfoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        standard_room_info_id = serializer.validated_data['standard_room_info_id']
+        yapen_room_name = serializer.validated_data['yapen_room_name']
+        yogei_room_name = serializer.validated_data['yogei_room_name']
+        RoomInfoModel.objects.create(user=user, standard_room_info_id=standard_room_info_id, yapen_room_name=yapen_room_name, yogei_room_name=yogei_room_name)
+        return JsonResponse({'message': 'successfully created'}, status=HTTP_201_CREATED)
+
+    def delete(self, request):
+        user = request.user
+        room_info_id = request.data.get('room_info_id')
+        RoomInfoModel.objects.get(id=room_info_id).delete()
+        return JsonResponse({'message': 'successfully deleted'}, status=HTTP_200_OK)
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])

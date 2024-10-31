@@ -8,7 +8,7 @@ export default function SessionProviderWrapper({ children }) {
     <SessionProvider>
       <header className="bg-blue-600 text-white p-4 shadow-md">
         <nav className="flex justify-between items-center">
-          <h1 className="text-lg font-semibold">My App</h1>
+          <h1 className="text-lg font-semibold">Room Admin Helper</h1>
           <ul className="flex space-x-4 text-sm">
             <li>
               <a href="/" className="hover:underline">

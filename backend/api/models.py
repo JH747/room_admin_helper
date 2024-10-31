@@ -28,3 +28,23 @@ class PlatformRoomInfoModel(models.Model):
             models.UniqueConstraint(fields=['user', 'display_order'], name='unique_display_order'),
         ]
 
+
+class StandardRoomInfoModel(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    standard_room_name = models.CharField(max_length=50, blank=False, null=False, unique=True)
+    display_order = models.IntegerField(blank=False, null=False)
+    room_quantity = models.IntegerField(blank=False, null=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'display_order'], name='unq_display_order'),
+        ]
+
+
+class RoomInfoModel(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    standard_room_info = models.ForeignKey(StandardRoomInfoModel, on_delete=models.CASCADE)
+    yapen_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    yogei_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    naver_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    bnb_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)

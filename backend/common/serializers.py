@@ -1,11 +1,14 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from api.models import StandardRoomInfoModel
 
-class SetStandardRoomInfoSerializer(serializers.ModelSerializer):
-    standard_room_name = serializers.CharField(source='standard_room_name', required=True)
-    display_order = serializers.IntegerField(source='display_order', required=True)
-    room_quantity = serializers.IntegerField(source='room_quantity', required=True)
+
+class SetStandardRoomInfoSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    standard_room_name = serializers.CharField(required=True)
+    display_order = serializers.IntegerField(required=True)
+    room_quantity = serializers.IntegerField(required=True)
 
     def validate(self, data):
         standard_room_name = data.get('standard_room_name')
@@ -18,12 +21,14 @@ class SetStandardRoomInfoSerializer(serializers.ModelSerializer):
         return data
 
 
-class SetRoomInfoSerializer(serializers.ModelSerializer):
-    standard_room_info_id = serializers.IntegerField(source='standard_room_info_id', required=True)
-    yapen_room_name = serializers.CharField(source='yapen_room_name')
-    yogei_room_name = serializers.CharField(source='yogei_room_name')
-    naver_room_name = serializers.CharField(source='naver_room_name')
-    bnb_room_name = serializers.CharField(source='bnb_room_name')
+
+class SetRoomInfoSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    standard_room_info_id = serializers.IntegerField(required=True)
+    yapen_room_name = serializers.CharField(required=False)
+    yogei_room_name = serializers.CharField(required=False)
+    naver_room_name = serializers.CharField(required=False)
+    bnb_room_name = serializers.CharField(required=False)
 
     def validate(self, data):
         standard_room_info_id = data.get('standard_room_info_id')
@@ -32,5 +37,5 @@ class SetRoomInfoSerializer(serializers.ModelSerializer):
         naver_room_name = data.get('naver_room_name')
         bnb_room_name = data.get('bnb_room_name')
         if yapen_room_name is None and yogei_room_name is None and naver_room_name is None and bnb_room_name is None:
-            raise ValidationError({'room_namse': 'ALL NONE'})
+            raise ValidationError({'room_names': 'ALL NONE'})
         return data

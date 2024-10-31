@@ -68,7 +68,7 @@ class SetStandardRoomInfoView(APIView):
         user = request.user
         target_standard_room_infos = StandardRoomInfoModel.objects.filter(user=user)
         response_data = SetStandardRoomInfoSerializer(target_standard_room_infos, many=True).data
-        return JsonResponse(response_data, status=HTTP_200_OK)
+        return JsonResponse(response_data, status=HTTP_200_OK, safe=False)
 
     def post(self, request):
         user = request.user
@@ -93,16 +93,15 @@ class SetRoomInfoView(APIView):
         user = request.user
         target_room_infos = RoomInfoModel.objects.filter(user=user)
         response_data = SetRoomInfoSerializer(target_room_infos, many=True).data
-        return JsonResponse(response_data, status=HTTP_200_OK)
+        return JsonResponse(response_data, status=HTTP_200_OK, safe=False)
 
     def post(self, request):
         user = request.user
         serializer = SetRoomInfoSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        standard_room_info_id = serializer.validated_data['standard_room_info_id']
-        yapen_room_name = serializer.validated_data['yapen_room_name']
-        yogei_room_name = serializer.validated_data['yogei_room_name']
-        RoomInfoModel.objects.create(user=user, standard_room_info_id=standard_room_info_id, yapen_room_name=yapen_room_name, yogei_room_name=yogei_room_name)
+        validated_data = serializer.validated_data
+        effective_data = {key: value for key, value in validated_data.items() if value is not None}
+        RoomInfoModel.objects.create(user=user, **effective_data)
         return JsonResponse({'message': 'successfully created'}, status=HTTP_201_CREATED)
 
     def delete(self, request):

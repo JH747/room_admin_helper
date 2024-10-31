@@ -1,9 +1,10 @@
 'use client';
-
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getSession } from 'next-auth/react';
 
 export default function StandardRoomListPage() {
+  const router = useRouter();
   const [rooms, setRooms] = useState([]);
   const [newRoom, setNewRoom] = useState({
     standard_room_name: '',
@@ -13,6 +14,9 @@ export default function StandardRoomListPage() {
 
   async function fetchData() {
     const session = await getSession();
+    if (!session) {
+      router.push('/errorpages/403');
+    }
     const res1 = await fetch('http://127.0.0.1:8000/api/setstandardroominfo/', {
       method: 'GET',
       headers: { Authorization: `Token ${session.token}` },
@@ -32,8 +36,8 @@ export default function StandardRoomListPage() {
 
   const handleAdd = () => {
     if (
-      !newRoom.standard_room_name ||
-      !newRoom.room_quantity ||
+      !newRoom.standard_room_name &&
+      !newRoom.room_quantity &&
       !newRoom.display_order
     )
       return;

@@ -27,6 +27,16 @@ export function AuthControl() {
           SignOut
         </button>
       </li>
+      <li>
+        <a href="/settings/standardroomlist" className="hover:underline">
+          Set Standard Rooms
+        </a>
+      </li>
+      <li>
+        <a href="/settings/roomlist" className="hover:underline">
+          Set Rooms
+        </a>
+      </li>
     </>
   ) : (
     <>

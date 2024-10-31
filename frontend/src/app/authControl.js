@@ -5,14 +5,6 @@ import { useSession, signOut } from 'next-auth/react';
 import { SessionProvider } from 'next-auth/react';
 
 export function AuthControl() {
-  return (
-    <SessionProvider>
-      <AuthControl_></AuthControl_>
-    </SessionProvider>
-  );
-}
-
-export function AuthControl_() {
   // const [isAuthed, setIsAuthed] = useState(false);
 
   // useEffect(() => {

@@ -25,10 +25,15 @@ class SetStandardRoomInfoSerializer(serializers.Serializer):
 class SetRoomInfoSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     standard_room_info_id = serializers.IntegerField(required=True)
+    standard_room_name = serializers.SerializerMethodField()  # 추가된 부분
     yapen_room_name = serializers.CharField(required=False)
     yogei_room_name = serializers.CharField(required=False)
     naver_room_name = serializers.CharField(required=False)
     bnb_room_name = serializers.CharField(required=False)
+
+    def get_standard_room_name(self, obj):
+        # standard_room_info_id에 해당하는 StandardRoomInfoModel의 이름 반환
+        return obj.standard_room_info.standard_room_name if obj.standard_room_info else None
 
     def validate(self, data):
         standard_room_info_id = data.get('standard_room_info_id')

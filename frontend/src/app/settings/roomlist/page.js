@@ -27,6 +27,7 @@ export default function RoomListPage() {
     const res2 = await fetch('http://127.0.0.1:8000/api/setstandardroominfo/', {
       method: 'GET',
       headers: { Authorization: `Token ${session.token}` },
+      withCredentials: true,
     });
     const data2 = await res2.json();
     const roomNames = data2.map((room) => room.standard_room_name);

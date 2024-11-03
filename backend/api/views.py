@@ -153,7 +153,7 @@ def retrieve_info(request):
         if err:
             yield f'data: {json.dumps({"status": "error", "message": err})}\n\n'
         else:
-            yield f'data: {json.dumps({"status": "success", "message": "Process completed successfully", "data": result})}\n\n'
+            yield f'data: {json.dumps({"status": "success", "message": "Process completed successfully", "result": result}, ensure_ascii=False)}\n\n'
         # 최종적으로 연결을 종료 신호 전송
         yield f'data: {json.dumps({"status": "closed", "message": "Connection closed"})}\n\n'
 

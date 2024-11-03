@@ -38,10 +38,12 @@ def bot_integrated(user, start_date, end_date, detector_mode):
         result['yogei'] = info_yogei
         return result
 
-    result = []
+    # result = []
+    result = {}
     target_date = start_date
     standard_room_infos = StandardRoomInfoModel.objects.filter(user=user).order_by('display_order')
     while target_date <= end_date:
+        day_problems = []
         day_yapen = info_yapen.get(target_date)
         day_yogei = info_yogei.get(target_date)
         for standard_room_info in standard_room_infos:
@@ -59,16 +61,26 @@ def bot_integrated(user, start_date, end_date, detector_mode):
                         booked += 1
                 if yogei_rn and yogei_rn:
                     if day_yapen.get(yapen_rn) == 2 and day_yogei.get(yogei_rn) == 2:
-                        result.append({'date': target_date.strftime('%Y-%m-%d'),
-                                       'problem': 'mismatch',
+                        # result.append({'date': target_date.strftime('%Y-%m-%d'),
+                        #                'problem': 'mismatch',
+                        #                'room_type': standard_room_name})
+                        day_problems.append({'problem': 'mismatch',
                                        'room_type': standard_room_name})
                         print('mismatch\t', target_date, '\t', standard_room_name)
 
             if booked > standard_room_info.room_quantity:
-                result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'overbooked', 'room_type': standard_room_name})
+                # result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'overbooked', 'room_type': standard_room_name})
+                day_problems.append({'problem': 'overbooked',
+                                     'room_type': standard_room_name})
                 print('overbooked\t', target_date, '\t', standard_room_name)
 
+        if day_problems:
+            result.update({target_date.strftime('%Y-%m-%d'): day_problems})
+
         target_date += timedelta(days=1)
+
+    if len(result) == 0:
+        return 'none'
 
     return result
 

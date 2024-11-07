@@ -24,4 +24,8 @@ public class AppUserService {
         appUserRepository.save(appUser);
         return appUser;
     }
+
+    public AppUser findByUsername(String username){
+        return appUserRepository.findByUsername(username);
+    }
 }

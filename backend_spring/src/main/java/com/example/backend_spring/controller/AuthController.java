@@ -36,12 +36,9 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody HashMap<String, Object> userData){
-        log.info("asdfasdf");
         String username = (String) userData.get("username");
         String password = (String) userData.get("password");
         String email = (String) userData.get("email");
-
-        System.out.println(username);
 
         appUserService.create(username, password, email);
 

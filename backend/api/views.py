@@ -34,7 +34,7 @@ def test_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def set_platform_auth(request):
-    user = request.user
+    user = request.user 
     yapen_id = request.data.get('yapen_id')
     yapen_pass = request.data.get('yapen_pass')
     yogei_id = request.data.get('yogei_id')

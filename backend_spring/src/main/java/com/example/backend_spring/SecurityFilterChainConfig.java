@@ -31,6 +31,7 @@ public class SecurityFilterChainConfig {
                         .requestMatchers("/test/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")  // /admin 경로는 ROLE_ADMIN만 접근 가능
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider)

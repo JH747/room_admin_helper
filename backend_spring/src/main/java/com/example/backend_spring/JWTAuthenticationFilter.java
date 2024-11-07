@@ -43,16 +43,13 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         String subject = jwtUtil.extractUsername(jwt);
 
         if(subject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            System.out.println("checkpoint1");
             UserDetails userDetails = userDetailsService.loadUserByUsername(subject);
             if(jwtUtil.isTokenValid(jwt, userDetails.getUsername())){
-                System.out.println("checkpoint2");
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()
                 );
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                System.out.println(authenticationToken);
             }
         }
         filterChain.doFilter(request, response);

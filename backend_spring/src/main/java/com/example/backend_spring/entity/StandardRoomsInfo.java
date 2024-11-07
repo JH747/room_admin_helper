@@ -17,18 +17,18 @@ public class StandardRoomsInfo {
 
     @ManyToOne
     @JoinColumn(name = "app_user_id")
-    private AppUser app_user;
+    private AppUser appUser;
 
-    @OneToMany(mappedBy = "standard_room_info", cascade = CascadeType.ALL, orphanRemoval = true) // foreign key field name of referencing entity
-    private List<PlatformsRoomsInfo> platforms_rooms_infos = new ArrayList<>();
+    @OneToMany(mappedBy = "standardRoomInfo", cascade = CascadeType.ALL, orphanRemoval = true) // foreign key field name of referencing entity
+    private List<PlatformsRoomsInfo> platformsRoomsInfos = new ArrayList<>();
 
     @Column(length = 50, nullable = false, unique=true)
-    private String room_name;
+    private String roomName;
 
     @Column(nullable = false, unique=true)
-    private Integer display_order;
+    private Integer displayOrder;
 
     @Column(nullable = false, unique=true)
-    private Integer room_quantity;
+    private Integer roomQuantity;
 
 }

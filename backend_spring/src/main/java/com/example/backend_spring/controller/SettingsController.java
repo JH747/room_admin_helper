@@ -3,10 +3,7 @@ package com.example.backend_spring.controller;
 import com.example.backend_spring.entity.PlatformsAuthInfo;
 import com.example.backend_spring.entity.PlatformsRoomsInfo;
 import com.example.backend_spring.entity.StandardRoomsInfo;
-import com.example.backend_spring.service.AppUserService;
-import com.example.backend_spring.service.PlatformsAuthInfoService;
-import com.example.backend_spring.service.PlatformsRoomsInfoService;
-import com.example.backend_spring.service.StandardRoomsInfoService;
+import com.example.backend_spring.service.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,30 +12,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+
 @RestController
 @RequestMapping("/settings")
 public class SettingsController {
 
     private final AppUserService appUserService;
-    private final PlatformsAuthInfoService platformsAuthInfoService;
-    private final StandardRoomsInfoService standardRoomsInfoService;
-    private final PlatformsRoomsInfoService platformsRoomsInfoService;
+    private final SettingsService settingsService;
 
     public SettingsController(AppUserService appUserService,
-                              PlatformsAuthInfoService platformsAuthInfoService,
-                              StandardRoomsInfoService standardRoomsInfoService,
-                              PlatformsRoomsInfoService platformsRoomsInfoService) {
+                              SettingsService settingsService) {
         this.appUserService = appUserService;
-        this.platformsAuthInfoService = platformsAuthInfoService;
-        this.standardRoomsInfoService = standardRoomsInfoService;
-        this.platformsRoomsInfoService = platformsRoomsInfoService;
+        this.settingsService = settingsService;
     }
 
     @PostMapping("/platformsAuthInfo")
     public ResponseEntity<String> setPlatformAuth(@RequestBody PlatformsAuthInfo authInfo){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        authInfo.setApp_user(appUserService.findByUsername(authentication.getName()));
-        platformsAuthInfoService.create(authInfo);
+        String username = authentication.getName();
+        settingsService.createPlatformsAuthInfo(authInfo, username);
 
         return ResponseEntity.ok("PlatformsAuthInfo Setting succeeded");
     }
@@ -46,17 +39,24 @@ public class SettingsController {
     @PostMapping("/standardRoomsInfo")
     public ResponseEntity<String> setStandardRoomsInfo(@RequestBody StandardRoomsInfo standardRoomsInfo){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        standardRoomsInfo.setApp_user(appUserService.findByUsername(authentication.getName()));
-        standardRoomsInfoService.create(standardRoomsInfo);
+        String username = authentication.getName();
+        settingsService.createStandardRoomsInfo(standardRoomsInfo, username);
 
         return ResponseEntity.ok("StandardRoomsInfo Setting succeeded");
     }
 
     @PostMapping("/platformsRoomsInfo")
-    public ResponseEntity<String> setPlatformsRoomsInfo(@RequestBody PlatformsRoomsInfo platformsRoomsInfo){
+    public ResponseEntity<String> setPlatformsRoomsInfo(@RequestBody HashMap<String, Object> data){
+        String standard_room_name = (String) data.get("standardRoomName");
+        String yapen_room_name = (String) data.get("yapenRoomName");
+        String yogei_room_name = (String) data.get("yogeiRoomName");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        platformsRoomsInfo.setApp_user(appUserService.findByUsername(authentication.getName()));
-        platformsRoomsInfoService.create(platformsRoomsInfo);
+        String username = authentication.getName();
+
+        PlatformsRoomsInfo platformsRoomsInfo = new PlatformsRoomsInfo();
+        platformsRoomsInfo.setYapenRoomName(yapen_room_name);
+        platformsRoomsInfo.setYogeiRoomName(yogei_room_name);
+        settingsService.createPlatformsRoomsInfo(platformsRoomsInfo, username, standard_room_name);
 
         return ResponseEntity.ok("PlatformsRoomsInfo Setting succeeded");
     }

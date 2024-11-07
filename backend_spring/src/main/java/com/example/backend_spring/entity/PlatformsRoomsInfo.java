@@ -14,22 +14,22 @@ public class PlatformsRoomsInfo {
 
     @ManyToOne
     @JoinColumn(name = "app_user_id")
-    private AppUser app_user;
+    private AppUser appUser;
 
     @ManyToOne
     @JoinColumn(name = "standard_room_info_id") // foreign key column name of referencing entity's table
-    private StandardRoomsInfo standard_room_info;
+    private StandardRoomsInfo standardRoomInfo;
 
-    @Column(unique = true, nullable = false)
-    private String yapen_room_name;
+    @Column(unique = true, nullable = true)
+    private String yapenRoomName;
 
-    @Column(unique = true, nullable = false)
-    private String yogei_room_name;
+    @Column(unique = true, nullable = true)
+    private String yogeiRoomName;
 
-    @Column(unique = true, nullable = false)
-    private String naver_room_name;
+    @Column(unique = true, nullable = true)
+    private String naverRoomName;
 
-    @Column(unique = true, nullable = false)
-    private String bnb_room_name;
+    @Column(unique = true, nullable = true)
+    private String bnbRoomName;
 
 }

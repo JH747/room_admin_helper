@@ -18,14 +18,14 @@ public class AppUser implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @OneToMany(mappedBy = "app_user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PlatformsAuthInfo> platforms_auth_infos = new ArrayList<>();
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true) // foreign key field name of referencing entity not table column!
+    private List<PlatformsAuthInfo> platformsAuthInfos = new ArrayList<>();
 
-    @OneToMany(mappedBy = "app_user", cascade = CascadeType.ALL, orphanRemoval = true) // foreign key field name of referencing entity
-    private List<StandardRoomsInfo> standard_rooms_infos = new ArrayList<>();
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StandardRoomsInfo> standardRoomsInfos = new ArrayList<>();
 
-    @OneToMany(mappedBy = "app_user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PlatformsRoomsInfo> platforms_rooms_infos = new ArrayList<>();
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PlatformsRoomsInfo> platformsRoomsInfos = new ArrayList<>();
 
     @Column(nullable = false, unique = true)
     private String username;

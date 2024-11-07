@@ -14,23 +14,30 @@ public class PlatformsAuthInfo {
 
     @ManyToOne
     @JoinColumn(name = "app_user_id")
-    private AppUser app_user;
+    private AppUser appUser;
 
     @Column(length = 50, nullable = true)
-    private String yapen_id;
+    private String yapenId;
+
     @Column(length = 50, nullable = true)
-    private String yapen_pass;
+    private String yapenPass;
+
     @Column(length = 50, nullable = true)
-    private String yogei_id;
+    private String yogeiId;
+
     @Column(length = 50, nullable = true)
-    private String yogi_pass;
+    private String yogeiPass;
+
     @Column(length = 50, nullable = true)
-    private String naver_id;
+    private String naverId;
+
     @Column(length = 50, nullable = true)
-    private String naver_pass;
+    private String naverPass;
+
     @Column(length = 50, nullable = true)
-    private String bnb_id;
+    private String bnbId;
+
     @Column(length = 50, nullable = true)
-    private String bnb_pass;
+    private String bnbPass;
 
 }

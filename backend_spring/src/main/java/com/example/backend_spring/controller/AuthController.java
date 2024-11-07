@@ -3,6 +3,7 @@ package com.example.backend_spring.controller;
 import com.example.backend_spring.JWTUtil;
 
 import com.example.backend_spring.service.AppUserService;
+import com.example.backend_spring.service.EmailService;
 import com.example.backend_spring.service.UserSecurityService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,12 +27,22 @@ public class AuthController {
     private final JWTUtil jwtUtil;
     private final UserSecurityService userDetailsService;
     private final AppUserService appUserService;
+    private final EmailService emailService;
 
-    public AuthController(AuthenticationManager authenticationManager, JWTUtil jwtUtil, UserSecurityService userDetailsService, AppUserService appUserService) {
+    public AuthController(AuthenticationManager authenticationManager, JWTUtil jwtUtil, UserSecurityService userDetailsService, AppUserService appUserService, EmailService emailService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.appUserService = appUserService;
+        this.emailService = emailService;
+    }
+
+    @PostMapping("/sendcode")
+    public ResponseEntity<String> sendCode(@RequestBody HashMap<String, Object> userData) {
+        String email = (String) userData.get("email");
+
+        emailService.sendCode(email);
+        return ResponseEntity.ok(String.format("Verification mail successfully sent to %s", email));
     }
 
     @PostMapping("/signup")
@@ -39,11 +50,13 @@ public class AuthController {
         String username = (String) userData.get("username");
         String password = (String) userData.get("password");
         String email = (String) userData.get("email");
+        String code = (String) userData.get("code");
+
+        if(!emailService.verifyCode(email, code)) return ResponseEntity.ok("Wrong verification code");
 
         appUserService.create(username, password, email);
 
-        String response = String.format("User %s created successfully", username);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(String.format("User %s created successfully", username));
     }
 
     @PostMapping("/signin")

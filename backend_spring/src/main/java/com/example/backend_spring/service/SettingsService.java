@@ -46,7 +46,7 @@ public class SettingsService {
         AppUser appUser = appUserRepository.findByUsername(username);
         StandardRoomsInfo standardRoomsInfo = standardRoomsInfoRepository.findByRoomName(standard_room_name);
         platformsRoomsInfo.setAppUser(appUser);
-        platformsRoomsInfo.setStandardRoomInfo(standardRoomsInfo);
+        platformsRoomsInfo.setStandardRoomsInfo(standardRoomsInfo);
         platformsRoomsInfoRepository.save(platformsRoomsInfo);
         return platformsRoomsInfo;
     }

@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Setter
+@Setter @Getter
 public class AppUser implements UserDetails {
 
     @Id

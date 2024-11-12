@@ -4,7 +4,6 @@ import random
 from django.utils import timezone
 from datetime import timedelta
 
-from common.models import EmailVerifyCodeModel
 from config import settings
 import smtplib
 from email.mime.text import MIMEText

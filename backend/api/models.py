@@ -1,50 +1,49 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-# Create your models here.
-class PlatformAuthInfoModel(models.Model):
-    # user = models.ForeignKey(User, on_delete=models.CASCADE, unique=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    yapen_id = models.CharField(max_length=50, blank=True, null=True)
-    yapen_pass = models.CharField(max_length=50, blank=True, null=True)
-    yogei_id = models.CharField(max_length=50, blank=True, null=True)
-    yogei_pass = models.CharField(max_length=50, blank=True, null=True)
-    naver_id = models.CharField(max_length=50, blank=True, null=True)
-    naver_pass = models.CharField(max_length=50, blank=True, null=True)
-    bnb_id = models.CharField(max_length=50, blank=True, null=True)
-    bnb_pass = models.CharField(max_length=50, blank=True, null=True)
-
-class PlatformRoomInfoModel(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    display_order = models.IntegerField(blank=False, null=False)
-    default_room_name = models.CharField(max_length=50, blank=False, null=False, unique=True)
-    yapen_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    yogei_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    naver_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    bnb_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
+class AppUser(models.Model):
+    username = models.CharField
+    password = models.CharField
+    email = models.CharField
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'display_order'], name='unique_display_order'),
-        ]
+        managed = False  # Django가 이 테이블을 관리하지 않도록 설정
+        db_table = 'app_user'  # 기존 데이터베이스 테이블 이름
 
-
-class StandardRoomInfoModel(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    standard_room_name = models.CharField(max_length=50, blank=False, null=False, unique=True)
-    display_order = models.IntegerField(blank=False, null=False)
-    room_quantity = models.IntegerField(blank=False, null=False)
+class PlatformsAuthInfo(models.Model):
+    appUser = models.OneToOneField(AppUser, on_delete=models.CASCADE)
+    yapen_id = models.CharField
+    yapen_pass = models.CharField
+    yogei_id = models.CharField
+    yogei_pass = models.CharField
+    naver_id = models.CharField
+    naver_pass = models.CharField
+    bnb_id = models.CharField
+    bnb_pass = models.CharField
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'display_order'], name='unq_display_order'),
-        ]
+        managed = False
+        db_table = 'platforms_auth_info'
 
+class StandardRoomsInfo(models.Model):
+    appUser = models.ForeignKey(AppUser, on_delete=models.CASCADE)
+    room_name = models.CharField
+    display_order = models.IntegerField
+    room_quantity = models.IntegerField
 
-class RoomInfoModel(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    standard_room_info = models.ForeignKey(StandardRoomInfoModel, on_delete=models.CASCADE)
-    yapen_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    yogei_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    naver_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    bnb_room_name = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    class Meta:
+        managed = False
+        db_table = 'standard_rooms_info'
+
+class PlatformsRoomsInfo(models.Model):
+    appUser = models.ForeignKey(AppUser, on_delete=models.CASCADE)
+    display_order = models.IntegerField
+    standard_room_info = models.ForeignKey(StandardRoomsInfo, on_delete=models.CASCADE)
+    yapen_room_name = models.CharField
+    yogei_room_name = models.CharField
+    naver_room_name = models.CharField
+    bnb_room_name = models.CharField
+
+    class Meta:
+        managed = False
+        db_table = 'platforms_rooms_info'

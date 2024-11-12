@@ -12,7 +12,7 @@ public class PlatformsAuthInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @ManyToOne
+    @ManyToOne // make it oneToOne
     @JoinColumn(name = "app_user_id")
     private AppUser appUser;
 

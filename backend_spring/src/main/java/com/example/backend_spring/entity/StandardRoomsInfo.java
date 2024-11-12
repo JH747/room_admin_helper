@@ -9,6 +9,11 @@ import java.util.List;
 
 @Entity
 @Getter @Setter
+@Table(name = "standard_rooms_info",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"app_user_id", "room_name"}),
+                @UniqueConstraint(columnNames = {"app_user_id", "display_order"})
+        })
 public class StandardRoomsInfo {
 
     @Id
@@ -16,19 +21,19 @@ public class StandardRoomsInfo {
     private int id;
 
     @ManyToOne
-    @JoinColumn(name = "app_user_id")
+    @JoinColumn(name = "app_user_id", referencedColumnName = "id")
     private AppUser appUser;
 
-    @OneToMany(mappedBy = "standardRoomInfo", cascade = CascadeType.ALL, orphanRemoval = true) // foreign key field name of referencing entity
+    @OneToMany(mappedBy = "standardRoomsInfo", cascade = CascadeType.ALL, orphanRemoval = true) // foreign key field name of referencing entity
     private List<PlatformsRoomsInfo> platformsRoomsInfos = new ArrayList<>();
 
-    @Column(length = 50, nullable = false, unique=true)
+    @Column(length = 50, nullable = false)
     private String roomName;
 
-    @Column(nullable = false, unique=true)
-    private Integer displayOrder;
-
-    @Column(nullable = false, unique=true)
+    @Column(nullable = false)
     private Integer roomQuantity;
+
+    @Column(nullable = false)
+    private Integer displayOrder;
 
 }

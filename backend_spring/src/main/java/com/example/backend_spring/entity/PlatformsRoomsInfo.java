@@ -17,19 +17,33 @@ public class PlatformsRoomsInfo {
     private AppUser appUser;
 
     @ManyToOne
-    @JoinColumn(name = "standard_room_info_id") // foreign key column name of referencing entity's table
-    private StandardRoomsInfo standardRoomInfo;
+    @JoinColumn(name = "standard_room_info_id", referencedColumnName = "id")
+    private StandardRoomsInfo standardRoomsInfo;
 
-    @Column(unique = true, nullable = true)
+    @Column(nullable = true)
     private String yapenRoomName;
 
-    @Column(unique = true, nullable = true)
+    @Column(nullable = true)
     private String yogeiRoomName;
 
-    @Column(unique = true, nullable = true)
+    @Column(nullable = true)
     private String naverRoomName;
 
-    @Column(unique = true, nullable = true)
+    @Column(nullable = true)
     private String bnbRoomName;
+
+    @Column(nullable = false)
+    private Integer displayOrder;
+
+    @PrePersist
+    @PreUpdate
+    private void checkLeastTwoNotNull(){
+        int notNullCount = 0;
+        if(yapenRoomName != null) notNullCount++;
+        if(yogeiRoomName != null) notNullCount++;
+        if(naverRoomName != null) notNullCount++;
+        if(bnbRoomName != null) notNullCount++;
+        if(notNullCount < 2) throw new IllegalArgumentException("At least two platforms needed");
+    }
 
 }

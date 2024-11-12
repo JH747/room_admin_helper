@@ -91,8 +91,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',  # MySQL 엔진
+        'NAME': 'tiger_db',  # 데이터베이스 이름
+        'USER': 'dev',  # 데이터베이스 사용자
+        'PASSWORD': '1234',  # 사용자 비밀번호
+        'HOST': 'localhost',  # 호스트 주소
+        'PORT': '3306',
+        #
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

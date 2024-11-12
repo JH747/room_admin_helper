@@ -7,12 +7,14 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-from api.models import PlatformAuthInfoModel, PlatformRoomInfoModel, StandardRoomInfoModel, RoomInfoModel
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from bs4 import BeautifulSoup
 
-def bot_integrated(user, start_date, end_date, detector_mode):
+from api.models import PlatformsRoomsInfo, PlatformsAuthInfo, StandardRoomsInfo
+
+
+def bot_integrated(app_user, start_date, end_date, detector_mode):
     print('checkpoint1')
     chrome_options = Options()
     chrome_options.add_argument("--no-sandbox")  # 리눅스 환경에서 필요할 수 있음
@@ -24,7 +26,7 @@ def bot_integrated(user, start_date, end_date, detector_mode):
     # implicitly waits for existence of every target element
     driver.implicitly_wait(15)
 
-    platform_info = PlatformAuthInfoModel.objects.get(user=user)
+    platform_info = PlatformsAuthInfo.objects.get(appUser=app_user)
 
     info_yapen = bot_yapen(driver, start_date, end_date, platform_info)
 
@@ -41,14 +43,14 @@ def bot_integrated(user, start_date, end_date, detector_mode):
     # result = []
     result = {}
     target_date = start_date
-    standard_room_infos = StandardRoomInfoModel.objects.filter(user=user).order_by('display_order')
+    standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
     while target_date <= end_date:
         day_problems = []
         day_yapen = info_yapen.get(target_date)
         day_yogei = info_yogei.get(target_date)
         for standard_room_info in standard_room_infos:
             standard_room_name = standard_room_info.standard_room_name
-            platform_room_infos = RoomInfoModel.objects.filter(standard_room_info = standard_room_info)
+            platform_room_infos = PlatformsRoomsInfo.objects.filter(standard_room_info=standard_room_info)
             booked = 0
             for platform_room_info in platform_room_infos:
                 yapen_rn = platform_room_info.yapen_room_name

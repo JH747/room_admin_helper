@@ -20,7 +20,7 @@ from django.urls import path
 from common import views
 
 urlpatterns = [
-    path('verifyemail/', views.verify_email, name='verify_email'),
-    path('signup/', views.signup, name='signup'),
-    path('login/', views.login, name='login'),
+    # path('verifyemail/', views.verify_email, name='verify_email'),
+    # path('signup/', views.signup, name='signup'),
+    # path('login/', views.login, name='login'),
 ]

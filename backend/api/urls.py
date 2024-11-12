@@ -20,8 +20,8 @@ from . import views
 app_name = 'api'
 urlpatterns = [
     path('tester/', views.test_view, name='test_view'),
-    path('setplatformauth/', views.set_platform_auth, name='set_platform_auth'),
-    path('setstandardroominfo/', views.SetStandardRoomInfoView.as_view(), name='set_standard_room_info'),
-    path('setroominfo/', views.SetRoomInfoView.as_view(), name='set_room_info'),
+    # path('setplatformauth/', views.set_platform_auth, name='set_platform_auth'),
+    # path('setstandardroominfo/', views.SetStandardRoomInfoView.as_view(), name='set_standard_room_info'),
+    # path('setroominfo/', views.SetRoomInfoView.as_view(), name='set_room_info'),
     path('retrieveinfo/', views.retrieve_info, name='retrieve_info'),
 ]

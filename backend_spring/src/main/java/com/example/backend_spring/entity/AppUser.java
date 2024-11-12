@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Getter @Setter
+@Setter
 public class AppUser implements UserDetails {
 
     @Id
@@ -27,6 +27,12 @@ public class AppUser implements UserDetails {
     @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlatformsRoomsInfo> platformsRoomsInfos = new ArrayList<>();
 
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Memo> memos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Supply> supplies =  new ArrayList<>();
+
     @Column(nullable = false, unique = true)
     private String username;
 
@@ -34,7 +40,7 @@ public class AppUser implements UserDetails {
     private String password;
 
     @Column(nullable = false)
-    private String emil;
+    private String email;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

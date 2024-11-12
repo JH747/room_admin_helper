@@ -7,8 +7,8 @@ import java.util.Date;
 
 @Component
 public class JWTUtil {
-    private final String SECRET_KEY = "temp_dev_secret_key"; // 환경 변수 등에서 설정하는 것이 좋습니다.
-    private final long EXPIRATION_TIME = 1000*60*5; // 토큰 유효 기간 (밀리초)
+    private final String SECRET_KEY = "temp_dev_secret_key"; // 환경 변수 등에서 재설정 요망
+    private final long EXPIRATION_TIME = 1000*60*5; // 토큰 유효 기간, 밀리초기준
 
     public String generateToken(String username) {
 

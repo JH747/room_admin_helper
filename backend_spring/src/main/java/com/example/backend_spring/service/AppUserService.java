@@ -20,7 +20,7 @@ public class AppUserService {
         AppUser appUser = new AppUser();
         appUser.setUsername(username);
         appUser.setPassword(passwordEncoder.encode(password));
-        appUser.setEmil(email);
+        appUser.setEmail(email);
         appUserRepository.save(appUser);
         return appUser;
     }

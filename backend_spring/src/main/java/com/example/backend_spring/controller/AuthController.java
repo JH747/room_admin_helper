@@ -47,8 +47,8 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody HashMap<String, Object> userData){
-        String username = (String) userData.get("username");
-        String password = (String) userData.get("password");
+        String username = (String) userData.get("id");
+        String password = (String) userData.get("pass");
         String email = (String) userData.get("email");
         String code = (String) userData.get("code");
 
@@ -61,8 +61,8 @@ public class AuthController {
 
     @PostMapping("/signin")
     public ResponseEntity<String> signin(@RequestBody HashMap<String, Object> userData){
-        String username = (String) userData.get("username");
-        String password = (String) userData.get("password");
+        String username = (String) userData.get("id");
+        String password = (String) userData.get("pass");
 
         try{
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));

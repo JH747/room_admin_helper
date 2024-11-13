@@ -75,7 +75,7 @@ export default function CalendarPage() {
       `/api/proxy_retrieve_info?start_date=${sDate}&end_date=${eDate}&detector_mode=yes`,
       {
         headers: {
-          Authorization: `Token ${session.token}`,
+          Authorization: `Bearer ${session.token}`,
         },
       }
     );

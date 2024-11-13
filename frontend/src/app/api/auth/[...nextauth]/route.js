@@ -13,7 +13,7 @@ const authOptions = {
       async authorize(credentials) {
         // Django 백엔드로 인증 요청 보내기
         try {
-          const res = await fetch('http://127.0.0.1:8000/common/login/', {
+          const res = await fetch('http://127.0.0.1:8080/auth/signin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -21,9 +21,9 @@ const authOptions = {
               pass: credentials.password,
             }),
           });
-          const data = await res.json();
-          if (res.ok && data.token) {
-            return { token: data.token };
+          const data = await res.text();
+          if (res.ok && data) {
+            return { token: data };
           }
           return null;
         } catch (error) {

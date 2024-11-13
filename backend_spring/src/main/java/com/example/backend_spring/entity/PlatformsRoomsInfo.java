@@ -1,5 +1,6 @@
 package com.example.backend_spring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,10 +15,12 @@ public class PlatformsRoomsInfo {
 
     @ManyToOne
     @JoinColumn(name = "app_user_id")
+    @JsonIgnore
     private AppUser appUser;
 
     @ManyToOne
     @JoinColumn(name = "standard_room_info_id", referencedColumnName = "id")
+    @JsonIgnore
     private StandardRoomsInfo standardRoomsInfo;
 
     @Column(nullable = true)

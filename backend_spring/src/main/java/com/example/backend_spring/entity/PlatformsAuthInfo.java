@@ -1,5 +1,6 @@
 package com.example.backend_spring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +15,7 @@ public class PlatformsAuthInfo {
 
     @OneToOne
     @JoinColumn(name = "app_user_id", referencedColumnName = "id") // foreign key column name of referencing entity's table
+    @JsonIgnore
     private AppUser appUser;
 
     @Column(length = 32, nullable = true)

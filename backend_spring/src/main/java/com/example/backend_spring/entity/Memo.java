@@ -1,5 +1,6 @@
 package com.example.backend_spring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -11,6 +12,7 @@ public class Memo {
 
     @ManyToOne
     @JoinColumn(name = "app_user_id", referencedColumnName = "id")
+    @JsonIgnore
     private AppUser appUser;
 
     @Column

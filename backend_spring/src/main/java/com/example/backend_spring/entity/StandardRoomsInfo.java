@@ -1,5 +1,6 @@
 package com.example.backend_spring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,6 +23,7 @@ public class StandardRoomsInfo {
 
     @ManyToOne
     @JoinColumn(name = "app_user_id", referencedColumnName = "id")
+    @JsonIgnore
     private AppUser appUser;
 
     @OneToMany(mappedBy = "standardRoomsInfo", cascade = CascadeType.ALL, orphanRemoval = true) // foreign key field name of referencing entity

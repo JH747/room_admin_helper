@@ -7,12 +7,10 @@ import com.example.backend_spring.service.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 
 @RestController
 @RequestMapping("/settings")
@@ -35,6 +33,14 @@ public class SettingsController {
 
         return ResponseEntity.ok("PlatformsAuthInfo Setting succeeded");
     }
+    @GetMapping("/platformsAuthInfo")
+    public ResponseEntity<PlatformsAuthInfo> getPlatformAuthInfo(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        PlatformsAuthInfo entity = settingsService.getPlatformsAuthInfo(username);
+
+        return ResponseEntity.ok(entity);
+    }
 
     @PostMapping("/standardRoomsInfo")
     public ResponseEntity<String> setStandardRoomsInfo(@RequestBody StandardRoomsInfo standardRoomsInfo){
@@ -43,6 +49,14 @@ public class SettingsController {
         settingsService.createStandardRoomsInfo(standardRoomsInfo, username);
 
         return ResponseEntity.ok("StandardRoomsInfo Setting succeeded");
+    }
+    @GetMapping("/standardRoomsInfo")
+    public ResponseEntity<List<StandardRoomsInfo>> getStandardRoomsInfo(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        List<StandardRoomsInfo> entities = settingsService.getStandardRoomsInfo(username);
+
+        return ResponseEntity.ok(entities);
     }
 
     @PostMapping("/platformsRoomsInfo")
@@ -59,5 +73,13 @@ public class SettingsController {
         settingsService.createPlatformsRoomsInfo(platformsRoomsInfo, username, standard_room_name);
 
         return ResponseEntity.ok("PlatformsRoomsInfo Setting succeeded");
+    }
+    @GetMapping("/platformsRoomsInfo")
+    public ResponseEntity<List<PlatformsRoomsInfo>> getPlatformsRoomsInfo(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        List<PlatformsRoomsInfo> entities = settingsService.getPlatformsRoomsInfo(username);
+
+        return ResponseEntity.ok(entities);
     }
 }

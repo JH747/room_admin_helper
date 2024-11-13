@@ -10,6 +10,8 @@ import com.example.backend_spring.repository.PlatformsRoomsInfoRepository;
 import com.example.backend_spring.repository.StandardRoomsInfoRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class SettingsService {
 
@@ -35,11 +37,21 @@ public class SettingsService {
         return platformsAuthInfo;
     }
 
+    public PlatformsAuthInfo getPlatformsAuthInfo(String username) {
+        AppUser appUser = appUserRepository.findByUsername(username);
+        return platformsAuthInfoRepository.findByAppUser(appUser);
+    }
+
     public StandardRoomsInfo createStandardRoomsInfo(StandardRoomsInfo standardRoomsInfo, String username) {
         AppUser appUser = appUserRepository.findByUsername(username);
         standardRoomsInfo.setAppUser(appUser);
         standardRoomsInfoRepository.save(standardRoomsInfo);
         return standardRoomsInfo;
+    }
+
+    public List<StandardRoomsInfo> getStandardRoomsInfo(String username) {
+        AppUser appUser = appUserRepository.findByUsername(username);
+        return standardRoomsInfoRepository.findByAppUser(appUser);
     }
 
     public PlatformsRoomsInfo createPlatformsRoomsInfo(PlatformsRoomsInfo platformsRoomsInfo, String username, String standard_room_name) {
@@ -49,6 +61,11 @@ public class SettingsService {
         platformsRoomsInfo.setStandardRoomsInfo(standardRoomsInfo);
         platformsRoomsInfoRepository.save(platformsRoomsInfo);
         return platformsRoomsInfo;
+    }
+
+    public List<PlatformsRoomsInfo> getPlatformsRoomsInfo(String username) {
+        AppUser appUser = appUserRepository.findByUsername(username);
+        return platformsRoomsInfoRepository.findByAppUser(appUser);
     }
 
 }

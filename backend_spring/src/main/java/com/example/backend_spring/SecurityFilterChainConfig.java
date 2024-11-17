@@ -7,7 +7,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 
 @Configuration
 public class SecurityFilterChainConfig {
@@ -35,7 +37,10 @@ public class SecurityFilterChainConfig {
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider)
+//                .addFilterBefore(jwtAuthenticationFilter, ExceptionTranslationFilter.class) // does not wowrk
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+//        http.setSharedObject(AsyncSupportConfigurer.class, new AsyncSupportConfigurer().setDefaultTimeout(5*60*1000)); // does not work
 
         return http.build();
     }

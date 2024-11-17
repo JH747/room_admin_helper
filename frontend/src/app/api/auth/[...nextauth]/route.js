@@ -11,7 +11,7 @@ const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // Django 백엔드로 인증 요청 보내기
+        // 백엔드로 인증 요청 보내기
         try {
           const res = await fetch('http://127.0.0.1:8080/auth/signin', {
             method: 'POST',
@@ -23,7 +23,7 @@ const authOptions = {
           });
           const data = await res.text();
           if (res.ok && data) {
-            return { token: data };
+            return { token: data }; // 이 객체가 'user' 로 전달됨.
           }
           return null;
         } catch (error) {
@@ -35,14 +35,15 @@ const authOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // 첫 로그인 시 유저 토큰 저장
+      // jwt callback: 첫 로그인 시 user의 token을 jwt에 저장
       if (user) {
         token.token = user.token;
       }
+      // 첫 로그인이 아닐 경우 이미 저장된 token 반환
       return token;
     },
     async session({ session, token }) {
-      // 세션에 토큰 포함
+      // session callback: JWT에 저장된 token을 session에 저장
       session.token = token.token;
       return session;
     },

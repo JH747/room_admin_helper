@@ -15,7 +15,6 @@ from api.models import PlatformsRoomsInfo, PlatformsAuthInfo, StandardRoomsInfo
 
 
 def bot_integrated(app_user, start_date, end_date, detector_mode):
-    print('checkpoint1')
     chrome_options = Options()
     chrome_options.add_argument("--no-sandbox")  # 리눅스 환경에서 필요할 수 있음
     chrome_options.add_argument("--disable-dev-shm-usage")  # 메모리 부족 문제 해결
@@ -27,11 +26,8 @@ def bot_integrated(app_user, start_date, end_date, detector_mode):
     driver.implicitly_wait(15)
 
     platform_info = PlatformsAuthInfo.objects.get(appUser=app_user)
-
     info_yapen = bot_yapen(driver, start_date, end_date, platform_info)
-
     info_yogei = bot_yogei(driver, start_date, end_date, platform_info)
-
     driver.quit()
 
     if not detector_mode:
@@ -49,7 +45,7 @@ def bot_integrated(app_user, start_date, end_date, detector_mode):
         day_yapen = info_yapen.get(target_date)
         day_yogei = info_yogei.get(target_date)
         for standard_room_info in standard_room_infos:
-            standard_room_name = standard_room_info.standard_room_name
+            standard_room_name = standard_room_info.room_name
             platform_room_infos = PlatformsRoomsInfo.objects.filter(standard_room_info=standard_room_info)
             booked = 0
             for platform_room_info in platform_room_infos:
@@ -82,7 +78,7 @@ def bot_integrated(app_user, start_date, end_date, detector_mode):
         target_date += timedelta(days=1)
 
     if len(result) == 0:
-        return 'none'
+        return {'message': 'no problem'}
 
     return result
 

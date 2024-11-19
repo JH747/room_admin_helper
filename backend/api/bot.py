@@ -32,8 +32,29 @@ def bot_integrated(app_user, start_date, end_date, detector_mode):
 
     if not detector_mode:
         result = {}
-        result['yapen'] = info_yapen
-        result['yogei'] = info_yogei
+        target_date = start_date
+        standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
+        while target_date <= end_date:
+            day_yapen = info_yapen.get(target_date)
+            day_yogei = info_yogei.get(target_date)
+            day = {}
+            for standard_room_info in standard_room_infos:
+                standard_room_name = standard_room_info.room_name
+                yapen_booked = 0
+                yogei_booked = 0
+                platform_room_infos = PlatformsRoomsInfo.objects.filter(standard_room_info=standard_room_info)
+                for platform_room_info in platform_room_infos:
+                    yapen_rn = platform_room_info.yapen_room_name
+                    yogei_rn = platform_room_info.yogei_room_name
+                    if day_yapen.get(yapen_rn) == 2:
+                        yapen_booked += 1
+                    if day_yogei.get(yogei_rn) == 2:
+                        yogei_booked += 1
+                day.update({standard_room_name: [{'yapen':yapen_booked}, {'yogei':yogei_booked}]})
+
+            result.update({target_date.strftime('%Y-%m-%d'): day})
+            target_date += timedelta(days=1)
+
         return result
 
     # result = []
@@ -57,7 +78,7 @@ def bot_integrated(app_user, start_date, end_date, detector_mode):
                 if yogei_rn:
                     if day_yogei.get(yogei_rn) == 2:
                         booked += 1
-                if yogei_rn and yogei_rn:
+                if yapen_rn and yogei_rn:
                     if day_yapen.get(yapen_rn) == 2 and day_yogei.get(yogei_rn) == 2:
                         # result.append({'date': target_date.strftime('%Y-%m-%d'),
                         #                'problem': 'mismatch',

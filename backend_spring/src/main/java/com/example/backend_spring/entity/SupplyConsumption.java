@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
-public class Supply {
+public class SupplyConsumption {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,17 +15,16 @@ public class Supply {
     @JsonIgnore
     private AppUser appUser;
 
-    @Column
-    private String name;
+    @ManyToOne
+    @JoinColumn(name = "standard_rooms_info_id", referencedColumnName = "id")
+    @JsonIgnore
+    private StandardRoomsInfo standardRoomsInfo;
+
+    @ManyToOne
+    @JoinColumn(name = "supply_id", referencedColumnName = "id")
+    @JsonIgnore
+    private Supply supply;
 
     @Column
-    private int desiredQuantity; // 사용자 설정
-
-    @Column
-    private int thresholdQuantity; // 사용자 설정
-
-    @Column
-    private int currentQuantity; // 사용자 업데이트
-
-
+    private int consumption;
 }

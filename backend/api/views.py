@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.http import StreamingHttpResponse
 
 from rest_framework.authentication import TokenAuthentication
@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_201_CREATED
 from rest_framework.views import APIView
+from django.core.serializers.json import DjangoJSONEncoder
 
 from api.models import AppUser
 from api.bot import bot_integrated

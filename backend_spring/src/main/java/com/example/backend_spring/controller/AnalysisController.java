@@ -48,21 +48,21 @@ public class AnalysisController {
         log.info("target_url: {}", target_url);
 
         // set sseEmitter
-        SseEmitter emitter = new SseEmitter(60000L); // 1 min timeout
+        SseEmitter emitter = new SseEmitter(5 * 60 * 1000L); // 5 min timeout
         emitter.onCompletion(() -> System.out.println("SSE 연결이 종료되었습니다."));
         emitter.onTimeout(() -> System.out.println("SSE 연결이 타임아웃되었습니다."));
         emitter.onError((e) -> System.out.println("SSE 연결 중 에러 발생: " + e.getMessage()));
         Map<String, String> init = new HashMap<>();
-        init.put("message", "Connection opened");
+        init.put("status", "Connection opened");
         try{
             emitter.send(init);
         }catch (IOException e){
             emitter.completeWithError(e);
         }
 
-        // scheduled ping sending on parent thread to maintain connection with client
+        // scheduled ping sending on child thread to maintain connection with client
         Map<String, String> ping = new HashMap<>();
-        ping.put("message", "Ping");
+        ping.put("status", "Ping");
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
         Runnable task = () -> {
             try{
@@ -81,7 +81,7 @@ public class AnalysisController {
         Runnable task2 = () -> {
 //            String s = longFunction();
             ResponseEntity<String> obj = transferRequestService.transferRequest(target_url, HttpMethod.GET, null);
-            System.out.println(obj.getBody());
+            log.info(obj.getBody());
             executorService.shutdown();
             log.info("{}\t{}\t{}", Thread.currentThread().getName(), SecurityContextHolder.getContext().getAuthentication().getName(), response.isCommitted());
             try {

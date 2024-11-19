@@ -82,10 +82,12 @@ export default function CalendarPage() {
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data); // JSON 형식으로 파싱
-        if (data.status === 'success') {
-          setResult(data.result);
-        }
-        if (data.status === 'closed') {
+        if (data.status === 'Ping') {
+          console.log('Ping received');
+        } else if (data.status === 'Connection opened') {
+          console.log('Connection opened');
+        } else {
+          setResult(data);
           eventSource.close();
         }
         console.log(data); // 데이터 출력 또는 상태 업데이트

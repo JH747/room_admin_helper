@@ -7,7 +7,7 @@ export async function GET(request) {
   try {
     const clientAuthHeader = request.headers.get('Authorization');
     const djangoResponse = await fetch(
-      `http://127.0.0.1:8000/api/retrieveinfo/?start_date=${start_date}&end_date=${end_date}&detector_mode=${detector_mode}`,
+      `http://127.0.0.1:8080/analysis/test?start_date=${start_date}&end_date=${end_date}&detector_mode=${detector_mode}`,
       {
         method: 'GET',
         headers: {

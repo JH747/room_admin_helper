@@ -46,3 +46,15 @@ class PlatformsRoomsInfo(models.Model):
     class Meta:
         managed = False
         db_table = 'platforms_rooms_info'
+
+class PreviousInfo(models.Model):
+    appUser = models.ForeignKey(AppUser, on_delete=models.CASCADE, db_column='app_user_id')
+    standard_room_info = models.ForeignKey(StandardRoomsInfo, on_delete=models.CASCADE, db_column='standard_room_info_id')
+    yapen_booked = models.IntegerField()
+    yogei_booked = models.IntegerField()
+    naver_booked = models.IntegerField()
+    bnb_booked = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'previous_info'

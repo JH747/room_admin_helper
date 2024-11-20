@@ -13,10 +13,9 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from bs4 import BeautifulSoup
 
-from api.models import PlatformsRoomsInfo, PlatformsAuthInfo, StandardRoomsInfo, PreviousInfo
+from api.models import PlatformsRoomsInfo, PlatformsAuthInfo, StandardRoomsInfo, PreviousInfo, SupplyConsumption, Supply
 
-
-def bot_integrated(app_user, start_date, end_date, detector_mode):
+def crawler(app_user, start_date, end_date):
     chrome_options = Options()
     chrome_options.add_argument("--no-sandbox")  # 리눅스 환경에서 필요할 수 있음
     chrome_options.add_argument("--disable-dev-shm-usage")  # 메모리 부족 문제 해결
@@ -31,27 +30,33 @@ def bot_integrated(app_user, start_date, end_date, detector_mode):
     info_yapen = bot_yapen(driver, start_date, end_date, platform_info)
     info_yogei = bot_yogei(driver, start_date, end_date, platform_info)
     driver.quit()
+    return info_yapen, info_yogei
+
+def retriever(app_user, start_date, end_date):
+    info_yapen, info_yogei = crawler(app_user, start_date, end_date)
 
     ### data retrieve mode used for updating database, making prediction model and providing data to front for visualization of data ###
-    ### for previous dates based on current date ###
-    if not detector_mode:
-        if app_user.previous_info_start is None:
+    ### use dates prior to current date ###
+    if app_user.previous_info_start is None:
+        result = retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei)
+    else:
+        if end_date < app_user.previous_info_start or app_user.previous_info_end < start_date:
             result = retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei)
+        elif app_user.previous_info_start <= start_date and end_date<= app_user.previous_info_end:
+            result = retrieve_info_from_db(app_user, start_date, end_date)
         else:
-            if end_date < app_user.previous_info_start or app_user.previous_info_end < start_date:
-                result = retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei)
-            elif app_user.previous_info_start <= start_date and end_date<= app_user.previous_info_end:
-                result = retrieve_info_from_db(app_user, start_date, end_date)
-            else:
-                result = {}
-                result.update(retrieve_info_from_bs(app_user, start_date, app_user.previous_info_start, info_yapen, info_yogei))
-                result.update(retrieve_info_from_db(app_user, app_user.previous_info_start, end_date))
-                result.update(retrieve_info_from_db(app_user, end_date, app_user.previous_info_end))
-                result.update(retrieve_info_from_bs(app_user, app_user.previous_info_end, end_date, info_yapen, info_yogei))
-        return result
+            result = {}
+            result.update(retrieve_info_from_bs(app_user, start_date, app_user.previous_info_start, info_yapen, info_yogei))
+            result.update(retrieve_info_from_db(app_user, app_user.previous_info_start, end_date))
+            result.update(retrieve_info_from_db(app_user, end_date, app_user.previous_info_end))
+            result.update(retrieve_info_from_bs(app_user, app_user.previous_info_end, end_date, info_yapen, info_yogei))
+    return result
+
+def detector(app_user, start_date, end_date):
+    info_yapen, info_yogei = crawler(app_user, start_date, end_date)
 
     ### detector mode used for checking rooms mismatch or overbooked ###
-    ### for subsequent dates based on current date ###
+    ### use dates subsequent from current date ###
     result = {}
     target_date = start_date
     standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
@@ -149,6 +154,49 @@ def bot_integrated(app_user, start_date, end_date, detector_mode):
     #     target_date += timedelta(days=1)
     #
     # return result
+
+def supply_warner(app_user, start_date, end_date):
+    info_yapen, info_yogei = crawler(app_user, start_date, end_date)
+
+    ### supply warn mode used for checking evident shortage of supplies ###
+    ### use dates subsequent from current date ###
+
+    target_date = start_date
+    standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
+    supplys = Supply.objects.filter(appUser=app_user)
+    nec_sup_cnt = {}
+    for supply in supplys:
+        nec_sup_cnt.update({supply: 0})
+    while target_date <= end_date:
+        day_yapen = info_yapen.get(target_date)
+        day_yogei = info_yogei.get(target_date)
+        day = {}
+        for standard_room_info in standard_room_infos:
+            standard_room_name = standard_room_info.room_name
+            booked = 0
+            platform_room_infos = PlatformsRoomsInfo.objects.filter(standard_room_info=standard_room_info)
+            for platform_room_info in platform_room_infos:
+                yapen_rn = platform_room_info.yapen_room_name
+                yogei_rn = platform_room_info.yogei_room_name
+                if day_yapen.get(yapen_rn) == 2:
+                    booked += 1
+                if day_yogei.get(yogei_rn) == 2:
+                    booked += 1
+
+            supply_consumptions = SupplyConsumption.objects.filter(standard_room_info=standard_room_info)
+            for supply_consumption in supply_consumptions:
+                num = nec_sup_cnt[supply_consumption.supply]
+                nec_sup_cnt[supply_consumption.supply] = num + supply_consumption.consumption
+
+        target_date += timedelta(days=1)
+
+    result = {}
+    for supply in supplys:
+        if nec_sup_cnt[supply] > supply.current_quantity:
+            result.update({supply.name: nec_sup_cnt[supply] - supply.current_quantity})
+
+    return result
+
 
 def generate_url_yapen(year, month):
     # eg: https://ceo.yapen.co.kr/rev/calendar?setDate=2024-10
@@ -305,7 +353,7 @@ def bot_yogei(driver, start_date, end_date, platform_info):
 
     return info
 
-############################################## retrieve functions below ##############################################
+############################################## retriever functions below ##############################################
 
 def retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei):
     result = {}
@@ -358,3 +406,6 @@ def retrieve_info_from_db(app_user, start_date, end_date):
         target_date += timedelta(days=1)
 
     return result
+
+############################################## consumption functions below ##############################################
+

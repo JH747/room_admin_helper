@@ -38,12 +38,12 @@ public class AnalysisController {
     public SseEmitter getAnalysis(HttpServletResponse response,
                                   @RequestParam("start_date") String start_date,
                                   @RequestParam("end_date") String end_date,
-                                  @RequestParam("detector_mode") String detector_mode) {
+                                  @RequestParam("mode") String mode) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        String target_url = String.format("http://localhost:8000/api/retrieveinfo/?username=%s&start_date=%s&end_date=%s&detector_mode=%s",
-                username, start_date, end_date, detector_mode);
+        String target_url = String.format("http://localhost:8000/api/%s/?username=%s&start_date=%s&end_date=%s",
+                mode, username, start_date, end_date);
 
         log.info("target_url: {}", target_url);
 

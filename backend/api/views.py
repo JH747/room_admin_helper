@@ -9,8 +9,8 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_IN
 from rest_framework.views import APIView
 from django.core.serializers.json import DjangoJSONEncoder
 
+from api.bot import detector, retriever, supply_warner
 from api.models import AppUser, TestEntity
-from api.bot import bot_integrated
 
 from datetime import datetime
 import threading
@@ -120,12 +120,10 @@ def test_view(request):
 #         return JsonResponse({'message': 'successfully deleted'}, status=HTTP_200_OK)
 
 @api_view(['GET'])
-def retrieve_info(request):
+def detect(request):
     username = request.query_params.get('username')
     start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
     end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
-    detector_mode = True if request.query_params.get('detector_mode') == 'yes' else False
-
     app_user = AppUser.objects.get(username=username)
 
     # result = None
@@ -171,6 +169,28 @@ def retrieve_info(request):
     # response['Cache-Control'] = 'no-cache'
     # response.status_code = HTTP_200_OK if not err else HTTP_500_INTERNAL_SERVER_ERROR
 
-    result = bot_integrated(app_user=app_user, start_date=start_date, end_date=end_date, detector_mode=detector_mode)
+    result = detector(app_user=app_user, start_date=start_date, end_date=end_date)
+
+    return JsonResponse(result, safe=False, status=HTTP_200_OK)
+
+@api_view(['GET'])
+def retrieve(request):
+    username = request.query_params.get('username')
+    start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
+    end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
+    app_user = AppUser.objects.get(username=username)
+
+    result = retriever(app_user=app_user, start_date=start_date, end_date=end_date)
+
+    return JsonResponse(result, safe=False, status=HTTP_200_OK)
+
+@api_view(['GET'])
+def supply_warn(request):
+    username = request.query_params.get('username')
+    start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
+    end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
+    app_user = AppUser.objects.get(username=username)
+
+    result = supply_warner(app_user=app_user, start_date=start_date, end_date=end_date)
 
     return JsonResponse(result, safe=False, status=HTTP_200_OK)

@@ -70,3 +70,24 @@ class PreviousInfo(models.Model):
     class Meta:
         managed = False
         db_table = 'previous_info'
+
+class Supply(models.Model):
+    appUser = models.ForeignKey(AppUser, on_delete=models.CASCADE, db_column='app_user_id')
+    name = models.CharField(max_length=50)
+    desired_quantity = models.IntegerField()
+    threshold_quantity = models.IntegerField()
+    current_quantity = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'supply'
+
+class SupplyConsumption(models.Model):
+    appUser = models.ForeignKey(AppUser, on_delete=models.CASCADE, db_column='app_user_id')
+    supply = models.ForeignKey(Supply, on_delete=models.CASCADE, db_column='supply_id')
+    standard_room_info = models.ForeignKey(StandardRoomsInfo, on_delete=models.CASCADE, db_column='standard_room_info_id')
+    consumption = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'supply_consumption'

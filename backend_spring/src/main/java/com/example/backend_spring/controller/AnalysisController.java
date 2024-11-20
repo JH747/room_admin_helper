@@ -34,7 +34,7 @@ public class AnalysisController {
         this.transferRequestService = transferRequestService;
     }
 
-    @GetMapping("/test")
+    @GetMapping("/general")
     public SseEmitter getAnalysis(HttpServletResponse response,
                                   @RequestParam("start_date") String start_date,
                                   @RequestParam("end_date") String end_date,
@@ -42,8 +42,8 @@ public class AnalysisController {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        String target_url = String.format("http://localhost:8000/api/%s/?username=%s&start_date=%s&end_date=%s",
-                mode, username, start_date, end_date);
+        String target_url = String.format("http://localhost:8000/api/retrieveinfo/?username=%s&start_date=%s&end_date=%s&mode=%s",
+                username, start_date, end_date, mode);
 
         log.info("target_url: {}", target_url);
 

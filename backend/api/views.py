@@ -120,10 +120,11 @@ def test_view(request):
 #         return JsonResponse({'message': 'successfully deleted'}, status=HTTP_200_OK)
 
 @api_view(['GET'])
-def detect(request):
+def processes(request):
     username = request.query_params.get('username')
     start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
     end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
+    mode = request.query_params.get('mode')
     app_user = AppUser.objects.get(username=username)
 
     # result = None
@@ -169,28 +170,14 @@ def detect(request):
     # response['Cache-Control'] = 'no-cache'
     # response.status_code = HTTP_200_OK if not err else HTTP_500_INTERNAL_SERVER_ERROR
 
-    result = detector(app_user=app_user, start_date=start_date, end_date=end_date)
+    result = None
+    if mode == 'detect':
+        result = detector(app_user=app_user, start_date=start_date, end_date=end_date)
+    elif mode == 'retrieve':
+        result = retriever(app_user=app_user, start_date=start_date, end_date=end_date)
+    elif mode == 'supply_warn':
+        result = supply_warner(app_user=app_user, start_date=start_date, end_date=end_date)
 
     return JsonResponse(result, safe=False, status=HTTP_200_OK)
 
-@api_view(['GET'])
-def retrieve(request):
-    username = request.query_params.get('username')
-    start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
-    end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
-    app_user = AppUser.objects.get(username=username)
 
-    result = retriever(app_user=app_user, start_date=start_date, end_date=end_date)
-
-    return JsonResponse(result, safe=False, status=HTTP_200_OK)
-
-@api_view(['GET'])
-def supply_warn(request):
-    username = request.query_params.get('username')
-    start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
-    end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
-    app_user = AppUser.objects.get(username=username)
-
-    result = supply_warner(app_user=app_user, start_date=start_date, end_date=end_date)
-
-    return JsonResponse(result, safe=False, status=HTTP_200_OK)

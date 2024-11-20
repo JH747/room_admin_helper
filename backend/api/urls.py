@@ -23,7 +23,6 @@ urlpatterns = [
     # path('setplatformauth/', views.set_platform_auth, name='set_platform_auth'),
     # path('setstandardroominfo/', views.SetStandardRoomInfoView.as_view(), name='set_standard_room_info'),
     # path('setroominfo/', views.SetRoomInfoView.as_view(), name='set_room_info'),
-    path('detect/', views.detect, name='detect'),
-    path('retrieve/', views.retrieve, name='retrieve'),
-    path('supply_warn/', views.supply_warn, name='supply_warn'),
+    path('processes/', views.processes, name='processes'),
+
 ]

@@ -327,19 +327,20 @@ def retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei
                     yapen_booked += 1
                 if day_yogei.get(yogei_rn) == 2:
                     yogei_booked += 1
-            day.update({standard_room_name: [{'yapen': yapen_booked}, {'yogei': yogei_booked}]})
+            day.update({standard_room_name: {'yapen': yapen_booked, 'yogei': yogei_booked}})
             PreviousInfo.objects.create(appUser=app_user, standard_room_info=standard_room_info,
                                         date=target_date, yapen_booked=yapen_booked, yogei_booked=yogei_booked)
 
         result.update({target_date.strftime('%Y-%m-%d'): day})
         target_date += timedelta(days=1)
 
-    if start_date < app_user.previous_info_start:
-        app_user.previous_info_start = start_date
-    if end_date > app_user.previous_info_end:
-        app_user.previous_info_end = end_date
+    if app_user.previous_info_start:
+        if start_date < app_user.previous_info_start:
+            app_user.previous_info_start = start_date
+        if end_date > app_user.previous_info_end:
+            app_user.previous_info_end = end_date
 
-    app_user.save()
+        app_user.save()
 
     return result
 
@@ -351,7 +352,7 @@ def retrieve_info_from_db(app_user, start_date, end_date):
         day = {}
         for standard_room_info in standard_room_infos:
             tmp = PreviousInfo.objects.get(appUser=app_user, standard_room_info=standard_room_info, date=target_date)
-            day.update({tmp.standard_room_name: [{'yapen': tmp.yapen_booked}, {'yogei': tmp.yogei_booked}]})
+            day.update({tmp.standard_room_name: {'yapen': tmp.yapen_booked, 'yogei': tmp.yogei_booked}})
 
         result.update({target_date.strftime('%Y-%m-%d'): day})
         target_date += timedelta(days=1)

@@ -9,7 +9,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_IN
 from rest_framework.views import APIView
 from django.core.serializers.json import DjangoJSONEncoder
 
-from api.models import AppUser
+from api.models import AppUser, TestEntity
 from api.bot import bot_integrated
 
 from datetime import datetime
@@ -20,9 +20,22 @@ import json
 # Create your views here.
 
 @api_view(['GET'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
 def test_view(request):
+
+    # TestEntity.objects.create(subject='subject', content='content')
+
+    obj = TestEntity.objects.get(id=4)
+    # content = {}
+    # content.update({"pass": 1})
+    # content.update({"gear": 2})
+    # obj.content = json.dumps(content)
+    # obj.save()
+
+    content = json.loads(obj.content)
+    print(content)
+    print(content['gear'])
 
     return JsonResponse({'message': 'good'})
 

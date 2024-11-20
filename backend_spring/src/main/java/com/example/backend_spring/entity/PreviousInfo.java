@@ -18,7 +18,7 @@ public class PreviousInfo {
     private AppUser appUser;
 
     @ManyToOne
-    @JoinColumn(name = "standard_rooms_info_id", referencedColumnName = "id")
+    @JoinColumn(name = "standard_room_info_id", referencedColumnName = "id")
     @JsonIgnore
     private StandardRoomsInfo standardRoomsInfo;
 

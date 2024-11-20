@@ -1,5 +1,14 @@
 from django.db import models
 
+class TestEntity(models.Model):
+    subject = models.CharField(max_length=100)
+    content = models.CharField(max_length=500)
+    create_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False
+        db_table = 'test_entity'
+
 class AppUser(models.Model):
     username = models.CharField(max_length=50)
     password = models.CharField(max_length=50)

@@ -4,6 +4,8 @@ class AppUser(models.Model):
     username = models.CharField(max_length=50)
     password = models.CharField(max_length=50)
     email = models.CharField(max_length=50)
+    previous_info_start = models.DateField()
+    previous_info_end = models.DateField()
 
     class Meta:
         managed = False  # Django가 이 테이블을 관리하지 않도록 설정
@@ -50,6 +52,7 @@ class PlatformsRoomsInfo(models.Model):
 class PreviousInfo(models.Model):
     appUser = models.ForeignKey(AppUser, on_delete=models.CASCADE, db_column='app_user_id')
     standard_room_info = models.ForeignKey(StandardRoomsInfo, on_delete=models.CASCADE, db_column='standard_room_info_id')
+    date = models.DateField()
     yapen_booked = models.IntegerField()
     yogei_booked = models.IntegerField()
     naver_booked = models.IntegerField()

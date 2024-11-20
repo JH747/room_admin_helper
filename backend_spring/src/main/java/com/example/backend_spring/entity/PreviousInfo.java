@@ -3,6 +3,8 @@ package com.example.backend_spring.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+
 @Entity
 public class PreviousInfo {
 
@@ -19,6 +21,9 @@ public class PreviousInfo {
     @JoinColumn(name = "standard_rooms_info_id", referencedColumnName = "id")
     @JsonIgnore
     private StandardRoomsInfo standardRoomsInfo;
+
+    @Column
+    private LocalDate date;
 
     @Column
     private int yapenBooked;

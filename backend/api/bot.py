@@ -1,3 +1,5 @@
+from turtledemo.penrose import start
+
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -11,7 +13,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from bs4 import BeautifulSoup
 
-from api.models import PlatformsRoomsInfo, PlatformsAuthInfo, StandardRoomsInfo
+from api.models import PlatformsRoomsInfo, PlatformsAuthInfo, StandardRoomsInfo, PreviousInfo
 
 
 def bot_integrated(app_user, start_date, end_date, detector_mode):
@@ -30,34 +32,26 @@ def bot_integrated(app_user, start_date, end_date, detector_mode):
     info_yogei = bot_yogei(driver, start_date, end_date, platform_info)
     driver.quit()
 
+    ### data retrieve mode used for updating database, making prediction model and providing data to front for visualization of data ###
+    ### for previous dates based on current date ###
     if not detector_mode:
-        result = {}
-        target_date = start_date
-        standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
-        while target_date <= end_date:
-            day_yapen = info_yapen.get(target_date)
-            day_yogei = info_yogei.get(target_date)
-            day = {}
-            for standard_room_info in standard_room_infos:
-                standard_room_name = standard_room_info.room_name
-                yapen_booked = 0
-                yogei_booked = 0
-                platform_room_infos = PlatformsRoomsInfo.objects.filter(standard_room_info=standard_room_info)
-                for platform_room_info in platform_room_infos:
-                    yapen_rn = platform_room_info.yapen_room_name
-                    yogei_rn = platform_room_info.yogei_room_name
-                    if day_yapen.get(yapen_rn) == 2:
-                        yapen_booked += 1
-                    if day_yogei.get(yogei_rn) == 2:
-                        yogei_booked += 1
-                day.update({standard_room_name: [{'yapen':yapen_booked}, {'yogei':yogei_booked}]})
-
-            result.update({target_date.strftime('%Y-%m-%d'): day})
-            target_date += timedelta(days=1)
-
+        if app_user.previous_info_start is None:
+            result = retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei)
+        else:
+            if end_date < app_user.previous_info_start or app_user.previous_info_end < start_date:
+                result = retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei)
+            elif app_user.previous_info_start <= start_date and end_date<= app_user.previous_info_end:
+                result = retrieve_info_from_db(app_user, start_date, end_date)
+            else:
+                result = {}
+                result.update(retrieve_info_from_bs(app_user, start_date, app_user.previous_info_start, info_yapen, info_yogei))
+                result.update(retrieve_info_from_db(app_user, app_user.previous_info_start, end_date))
+                result.update(retrieve_info_from_db(app_user, end_date, app_user.previous_info_end))
+                result.update(retrieve_info_from_bs(app_user, app_user.previous_info_end, end_date, info_yapen, info_yogei))
         return result
 
-    # result = []
+    ### detector mode used for checking rooms mismatch or overbooked ###
+    ### for subsequent dates based on current date ###
     result = {}
     target_date = start_date
     standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
@@ -310,3 +304,56 @@ def bot_yogei(driver, start_date, end_date, platform_info):
         target_date += relativedelta(months=1)
 
     return info
+
+############################################## retrieve functions below ##############################################
+
+def retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei):
+    result = {}
+    target_date = start_date
+    standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
+    while target_date <= end_date:
+        day_yapen = info_yapen.get(target_date)
+        day_yogei = info_yogei.get(target_date)
+        day = {}
+        for standard_room_info in standard_room_infos:
+            standard_room_name = standard_room_info.room_name
+            yapen_booked = 0
+            yogei_booked = 0
+            platform_room_infos = PlatformsRoomsInfo.objects.filter(standard_room_info=standard_room_info)
+            for platform_room_info in platform_room_infos:
+                yapen_rn = platform_room_info.yapen_room_name
+                yogei_rn = platform_room_info.yogei_room_name
+                if day_yapen.get(yapen_rn) == 2:
+                    yapen_booked += 1
+                if day_yogei.get(yogei_rn) == 2:
+                    yogei_booked += 1
+            day.update({standard_room_name: [{'yapen': yapen_booked}, {'yogei': yogei_booked}]})
+            PreviousInfo.objects.create(appUser=app_user, standard_room_info=standard_room_info,
+                                        date=target_date, yapen_booked=yapen_booked, yogei_booked=yogei_booked)
+
+        result.update({target_date.strftime('%Y-%m-%d'): day})
+        target_date += timedelta(days=1)
+
+    if start_date < app_user.previous_info_start:
+        app_user.previous_info_start = start_date
+    if end_date > app_user.previous_info_end:
+        app_user.previous_info_end = end_date
+
+    app_user.save()
+
+    return result
+
+def retrieve_info_from_db(app_user, start_date, end_date):
+    result = {}
+    target_date = start_date
+    standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
+    while target_date <= end_date:
+        day = {}
+        for standard_room_info in standard_room_infos:
+            tmp = PreviousInfo.objects.get(appUser=app_user, standard_room_info=standard_room_info, date=target_date)
+            day.update({tmp.standard_room_name: [{'yapen': tmp.yapen_booked}, {'yogei': tmp.yogei_booked}]})
+
+        result.update({target_date.strftime('%Y-%m-%d'): day})
+        target_date += timedelta(days=1)
+
+    return result

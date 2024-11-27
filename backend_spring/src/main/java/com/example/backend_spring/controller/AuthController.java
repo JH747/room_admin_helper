@@ -52,11 +52,15 @@ public class AuthController {
         String email = (String) userData.get("email");
         String code = (String) userData.get("code");
 
-        if(!emailService.verifyCode(email, code)) return ResponseEntity.ok("Wrong verification code");
+        if(!emailService.verifyCode(email, code)) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Wrong verification code");
 
-        appUserService.create(username, password, email);
+        try{
+            appUserService.create(username, password, email);
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicating username");
+        }
 
-        return ResponseEntity.ok(String.format("User %s created successfully", username));
+        return ResponseEntity.status(HttpStatus.CREATED).body(String.format("User %s created successfully", username));
     }
 
     @PostMapping("/signin")

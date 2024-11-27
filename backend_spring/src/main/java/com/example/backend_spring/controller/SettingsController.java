@@ -4,6 +4,7 @@ import com.example.backend_spring.entity.PlatformsAuthInfo;
 import com.example.backend_spring.entity.PlatformsRoomsInfo;
 import com.example.backend_spring.entity.StandardRoomsInfo;
 import com.example.backend_spring.service.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -73,6 +74,8 @@ public class SettingsController {
         settingsService.createPlatformsRoomsInfo(platformsRoomsInfo, username, standard_room_name);
 
         return ResponseEntity.ok("PlatformsRoomsInfo Setting succeeded");
+
+        // ------------------------------------------------------------------------- displayorder 입력 누락
     }
     @GetMapping("/platformsRoomsInfo")
     public ResponseEntity<List<PlatformsRoomsInfo>> getPlatformsRoomsInfo(){
@@ -81,5 +84,15 @@ public class SettingsController {
         List<PlatformsRoomsInfo> entities = settingsService.getPlatformsRoomsInfo(username);
 
         return ResponseEntity.ok(entities);
+
+        // ------------------------------------------------------------------------- 반환시 standardroomname 누락
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleSpecificControllerExceptions(Exception e){
+        e.printStackTrace();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Internal Server Error");
     }
 }

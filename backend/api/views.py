@@ -1,3 +1,4 @@
+
 from django.http import JsonResponse, HttpResponse
 from django.http import StreamingHttpResponse
 
@@ -121,63 +122,66 @@ def test_view(request):
 
 @api_view(['GET'])
 def processes(request):
-    username = request.query_params.get('username')
-    start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
-    end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
-    mode = request.query_params.get('mode')
-    app_user = AppUser.objects.get(username=username)
+    try:
+        username = request.query_params.get('username')
+        start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
+        end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
+        mode = request.query_params.get('mode')
+        app_user = AppUser.objects.get(username=username)
 
-    # result = None
-    # err = None
-    # completed = threading.Event()
-    #
-    # def run_bot():
-    #     nonlocal result, err, completed, start_date, end_date, detector_mode, app_user
-    #     try:
-    #         # bot_integrated 실행 및 결과 저장
-    #         result = bot_integrated(app_user=app_user, start_date=start_date, end_date=end_date, detector_mode=detector_mode)
-    #     except Exception as e:
-    #         # 에러가 발생하면 에러 메시지 저장
-    #         err = str(e)
-    #     finally:
-    #         # 작업이 완료되었음을 알림
-    #         completed.set()
-    #
-    # def event_stream():
-    #     nonlocal result, err, completed
-    #     yield f'data: {json.dumps({"status": "processing", "message": "Processing started"})}\n\n'
-    #     time.sleep(1)
-    #
-    #     # 별도의 스레드에서 bot_integrated 실행
-    #     bot_thread = threading.Thread(target=run_bot)
-    #     bot_thread.start()
-    #
-    #     # bot_integrated가 실행되는 동안 heartbeat 전송
-    #     while not completed.is_set():
-    #         yield f'data: {json.dumps({"status": "heartbeat", "message": "Processing"})}\n\n'
-    #         time.sleep(5)  # 5초마다 heartbeat 전송
-    #
-    #     # 작업 완료 후 결과 전송
-    #     if err:
-    #         yield f'data: {json.dumps({"status": "error", "message": err})}\n\n'
-    #     else:
-    #         yield f'data: {json.dumps({"status": "success", "message": "Process completed successfully", "result": result}, ensure_ascii=False)}\n\n'
-    #     # 최종적으로 연결을 종료 신호 전송
-    #     yield f'data: {json.dumps({"status": "closed", "message": "Connection closed"})}\n\n'
-    #
-    # # StreamingHttpResponse로 클라이언트와의 연결을 유지
-    # response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
-    # response['Cache-Control'] = 'no-cache'
-    # response.status_code = HTTP_200_OK if not err else HTTP_500_INTERNAL_SERVER_ERROR
+        # result = None
+        # err = None
+        # completed = threading.Event()
+        #
+        # def run_bot():
+        #     nonlocal result, err, completed, start_date, end_date, detector_mode, app_user
+        #     try:
+        #         # bot_integrated 실행 및 결과 저장
+        #         result = bot_integrated(app_user=app_user, start_date=start_date, end_date=end_date, detector_mode=detector_mode)
+        #     except Exception as e:
+        #         # 에러가 발생하면 에러 메시지 저장
+        #         err = str(e)
+        #     finally:
+        #         # 작업이 완료되었음을 알림
+        #         completed.set()
+        #
+        # def event_stream():
+        #     nonlocal result, err, completed
+        #     yield f'data: {json.dumps({"status": "processing", "message": "Processing started"})}\n\n'
+        #     time.sleep(1)
+        #
+        #     # 별도의 스레드에서 bot_integrated 실행
+        #     bot_thread = threading.Thread(target=run_bot)
+        #     bot_thread.start()
+        #
+        #     # bot_integrated가 실행되는 동안 heartbeat 전송
+        #     while not completed.is_set():
+        #         yield f'data: {json.dumps({"status": "heartbeat", "message": "Processing"})}\n\n'
+        #         time.sleep(5)  # 5초마다 heartbeat 전송
+        #
+        #     # 작업 완료 후 결과 전송
+        #     if err:
+        #         yield f'data: {json.dumps({"status": "error", "message": err})}\n\n'
+        #     else:
+        #         yield f'data: {json.dumps({"status": "success", "message": "Process completed successfully", "result": result}, ensure_ascii=False)}\n\n'
+        #     # 최종적으로 연결을 종료 신호 전송
+        #     yield f'data: {json.dumps({"status": "closed", "message": "Connection closed"})}\n\n'
+        #
+        # # StreamingHttpResponse로 클라이언트와의 연결을 유지
+        # response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+        # response['Cache-Control'] = 'no-cache'
+        # response.status_code = HTTP_200_OK if not err else HTTP_500_INTERNAL_SERVER_ERROR
 
-    result = None
-    if mode == 'detect':
-        result = detector(app_user=app_user, start_date=start_date, end_date=end_date)
-    elif mode == 'retrieve':
-        result = retriever(app_user=app_user, start_date=start_date, end_date=end_date)
-    elif mode == 'supply_warn':
-        result = supply_warner(app_user=app_user, start_date=start_date, end_date=end_date)
+        result = None
+        if mode == 'detect':
+            result = detector(app_user=app_user, start_date=start_date, end_date=end_date)
+        elif mode == 'retrieve':
+            result = retriever(app_user=app_user, start_date=start_date, end_date=end_date)
+        elif mode == 'supply_warn':
+            result = supply_warner(app_user=app_user, start_date=start_date, end_date=end_date)
+        return JsonResponse(result, safe=False, status=HTTP_200_OK)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, safe=False, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
-    return JsonResponse(result, safe=False, status=HTTP_200_OK)
 
 

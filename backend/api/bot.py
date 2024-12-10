@@ -342,8 +342,9 @@ def bot_yogei(driver, start_date, end_date, platform_info):
     #         modal.remove();
     #     }
     # """)
-    # explicitly wait for user specific accommodation name to be present
-    WebDriverWait(driver, 15).until(expected_conditions.presence_of_element_located((By.CLASS_NAME, "css-1cj511q")))
+
+    # explicitly wait for user specific element(name of accommodation) to be present
+    WebDriverWait(driver, 15).until(expected_conditions.presence_of_element_located((By.CLASS_NAME, "css-li2428")))
 
     target_date = start_date.replace(day=1)
     info = {}

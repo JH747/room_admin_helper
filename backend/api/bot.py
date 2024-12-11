@@ -1,4 +1,4 @@
-from turtledemo.penrose import start
+from django.db.models.functions import ExtractYear, ExtractMonth
 
 import requests
 from selenium import webdriver
@@ -13,9 +13,18 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from bs4 import BeautifulSoup
 
-from api.models import PlatformsRoomsInfo, PlatformsAuthInfo, StandardRoomsInfo, PreviousInfo, SupplyConsumption, Supply
+from api.models import PlatformsRoomsInfo, PlatformsAuthInfo, StandardRoomsInfo, PreviousInfo, SupplyConsumption, Supply, AppUser
 
-def crawler(app_user, start_date, end_date):
+
+def crawler(app_user: AppUser, start_date: datetime, end_date: datetime, year_months: list[tuple[int,int]]):
+    """
+    crawl data from websites using selenium. implicitly use bot_yapen, bot_yogei functions.
+    :param app_user:
+    :param start_date:
+    :param end_date:
+    :param year_months: if this parameter - list of (year,month) tuples - is given, function ignores start_date, end_date and uses this parameter
+    :return:
+    """
     chrome_options = Options()
     chrome_options.add_argument("--no-sandbox")  # 리눅스 환경에서 필요할 수 있음
     chrome_options.add_argument("--disable-dev-shm-usage")  # 메모리 부족 문제 해결
@@ -27,36 +36,59 @@ def crawler(app_user, start_date, end_date):
     driver.implicitly_wait(15)
 
     platform_info = PlatformsAuthInfo.objects.get(appUser=app_user)
-    info_yapen = bot_yapen(driver, start_date, end_date, platform_info)
-    info_yogei = bot_yogei(driver, start_date, end_date, platform_info)
+    info_yapen = bot_yapen(driver, start_date, end_date, year_months, platform_info)
+    info_yogei = bot_yogei(driver, start_date, end_date, year_months, platform_info)
     driver.quit()
     return info_yapen, info_yogei
 
-def retriever(app_user, start_date, end_date):
-    info_yapen, info_yogei = crawler(app_user, start_date, end_date)
+######## 3 main functions start
+def retriever(app_user: AppUser, start_date: datetime, end_date: datetime):
+    """
+    data retrieve mode collects data from web and collecting or updating data from and to database's previous_info table.
+    collected data will be used for making prediction model or providing data to front for visualization of data.
+    processes dates before today.
+    :param app_user:
+    :param start_date:
+    :param end_date:
+    :return: all booking data of given period's months
+    """
+    # end_date's month < this month condition adding maybe inserted at top here
 
-    ### data retrieve mode used for updating database, making prediction model and providing data to front for visualization of data ###
-    ### use dates prior to current date ###
-    if app_user.previous_info_start is None:
-        result = retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei)
-    else:
-        if end_date < app_user.previous_info_start or app_user.previous_info_end < start_date:
-            result = retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei)
-        elif app_user.previous_info_start <= start_date and end_date<= app_user.previous_info_end:
-            result = retrieve_info_from_db(app_user, start_date, end_date)
+    # previous data stored in db by monthly basis existing_year_month indicates them
+    existing_year_month = (PreviousInfo.objects.filter(appUser=app_user)
+             .annotate(year=ExtractYear('date'),month=ExtractMonth('date')).values_list('year', 'month').distinct())
+    existing_year_month = list(existing_year_month)
+
+    target_year_months = []
+    result = {}
+    curr = datetime(start_date.year, start_date.month, 1) # first day of each month
+    # retrieved from db below
+    while curr <= end_date:
+        if (curr.year, curr.month) in existing_year_month:
+            result.update(retrieve_info_from_db(app_user, curr, (curr + relativedelta(months=1)) - relativedelta(days=1))) # retrieve data from db
         else:
-            result = {}
-            result.update(retrieve_info_from_bs(app_user, start_date, app_user.previous_info_start, info_yapen, info_yogei))
-            result.update(retrieve_info_from_db(app_user, app_user.previous_info_start, end_date))
-            result.update(retrieve_info_from_db(app_user, end_date, app_user.previous_info_end))
-            result.update(retrieve_info_from_bs(app_user, app_user.previous_info_end, end_date, info_yapen, info_yogei))
+            target_year_months.append((curr.year, curr.month)) # store months that should be from retrieved from crawling
+        curr = curr + relativedelta(months=1)
+    # retrieved from web below
+    info_yapen, info_yogei = crawler(app_user, None, None, target_year_months)
+    for target_year_month in target_year_months:
+        st = datetime(target_year_month[0], target_year_month[1], 1)
+        ed = datetime(target_year_month[0], target_year_month[1], 1) + relativedelta(months=1) - relativedelta(days=1)
+        result.update(retrieve_info_from_bs(app_user, st, ed, info_yapen, info_yogei))
+
     return result
 
-def detector(app_user, start_date, end_date):
-    info_yapen, info_yogei = crawler(app_user, start_date, end_date)
+def detector(app_user: AppUser, start_date: datetime, end_date: datetime):
+    """
+    detector mode used for checking rooms mismatch or overbooked.
+    processes dates subsequent from current date.
+    :param app_user:
+    :param start_date:
+    :param end_date:
+    :return: all mismatch and overbooking data of given period
+    """
+    info_yapen, info_yogei = crawler(app_user, start_date, end_date, None)
 
-    ### detector mode used for checking rooms mismatch or overbooked ###
-    ### use dates subsequent from current date ###
     result = {}
     target_date = start_date
     standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
@@ -155,11 +187,16 @@ def detector(app_user, start_date, end_date):
     #
     # return result
 
-def supply_warner(app_user, start_date, end_date):
-    info_yapen, info_yogei = crawler(app_user, start_date, end_date)
-
-    ### supply warn mode used for checking evident shortage of supplies ###
-    ### use dates subsequent from current date ###
+def supply_warner(app_user: AppUser, start_date: datetime, end_date: datetime):
+    """
+    supply warn mode used for checking evident shortage of supplies.
+    processes dates subsequent from current date.
+    :param app_user:
+    :param start_date:
+    :param end_date:
+    :return: all insufficient supplies and its insufficiency
+    """
+    info_yapen, info_yogei = crawler(app_user, start_date, end_date, None)
 
     target_date = start_date
     standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
@@ -197,6 +234,9 @@ def supply_warner(app_user, start_date, end_date):
 
     return result
 
+######## end
+
+############################################## crawling functions below ##############################################
 
 def generate_url_yapen(year, month):
     # eg: https://ceo.yapen.co.kr/rev/calendar?setDate=2024-10
@@ -204,7 +244,7 @@ def generate_url_yapen(year, month):
     url = f"https://ceo.yapen.co.kr/rev/calendar?{param}"
     return url
 
-def get_one_month_yapen(session, target_date):
+def get_one_month_yapen(session, target_date: datetime):
     year = target_date.year
     month = target_date.month
     url = generate_url_yapen(year, month)
@@ -248,7 +288,7 @@ def get_one_month_yapen(session, target_date):
 
     return month_info
 
-def bot_yapen(driver, start_date, end_date, platform_info):
+def bot_yapen(driver, start_date: datetime, end_date: datetime, year_months: list[tuple[int,int]], platform_info: PlatformsAuthInfo):
     ## login
     driver.get('https://ceo.yapen.co.kr')
     id_input = driver.find_element(By.ID, "ceoID")
@@ -267,11 +307,16 @@ def bot_yapen(driver, start_date, end_date, platform_info):
     user_agent = driver.execute_script("return navigator.userAgent")
     session.headers['User-Agent'] = user_agent
 
-    target_date = start_date.replace(day=1)
     info = {}
-    while target_date <= end_date:
-        info.update(get_one_month_yapen(session, target_date))
-        target_date += relativedelta(months=1)
+    if year_months:
+        for year_month in year_months:
+            target_date = datetime(year_month[0], year_month[1], 1)
+            info.update(get_one_month_yapen(session, target_date))
+    else:
+        target_date = start_date.replace(day=1)
+        while target_date <= end_date:
+            info.update(get_one_month_yapen(session, target_date))
+            target_date += relativedelta(months=1)
 
     return info
 
@@ -281,7 +326,7 @@ def generate_url_yogei(year, month):
     url = f"https://partner.goodchoice.kr/sales/status?{param}"
     return url
 
-def get_one_month_yogei(driver, target_date):
+def get_one_month_yogei(driver, target_date: datetime):
     year = target_date.year
     month = target_date.month
     url = generate_url_yogei(year, month)
@@ -326,7 +371,7 @@ def get_one_month_yogei(driver, target_date):
 
     return month_info
 
-def bot_yogei(driver, start_date, end_date, platform_info):
+def bot_yogei(driver, start_date: datetime, end_date: datetime, year_months: list[tuple[int,int]], platform_info: PlatformsAuthInfo):
     ## login
     driver.get('https://partner.goodchoice.kr/')
     id_input = driver.find_element(By.NAME, "userId")
@@ -346,17 +391,32 @@ def bot_yogei(driver, start_date, end_date, platform_info):
     # explicitly wait for user specific element(name of accommodation) to be present
     WebDriverWait(driver, 15).until(expected_conditions.presence_of_element_located((By.CLASS_NAME, "css-li2428")))
 
-    target_date = start_date.replace(day=1)
     info = {}
-    while target_date <= end_date:
-        info.update(get_one_month_yogei(driver, target_date))
-        target_date += relativedelta(months=1)
+    if year_months:
+        for year_month in year_months:
+            target_date = datetime(year_month[0], year_month[1], 1)
+            info.update(get_one_month_yapen(driver, target_date))
+    else:
+        target_date = start_date.replace(day=1)
+        while target_date <= end_date:
+            info.update(get_one_month_yogei(driver, target_date))
+            target_date += relativedelta(months=1)
 
     return info
 
 ############################################## retriever functions below ##############################################
 
-def retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei):
+def retrieve_info_from_bs(app_user: AppUser, start_date: datetime, end_date: datetime, info_yapen, info_yogei):
+    """
+    rearrange data arranged at bot_yapen and bot_yogei by extracting booked info only.
+    update db's previous_info table.
+    :param app_user:
+    :param start_date:
+    :param end_date:
+    :param info_yapen:
+    :param info_yogei:
+    :return:
+    """
     result = {}
     target_date = start_date
     standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
@@ -383,17 +443,16 @@ def retrieve_info_from_bs(app_user, start_date, end_date, info_yapen, info_yogei
         result.update({target_date.strftime('%Y-%m-%d'): day})
         target_date += timedelta(days=1)
 
-    if app_user.previous_info_start:
-        if start_date < app_user.previous_info_start:
-            app_user.previous_info_start = start_date
-        if end_date > app_user.previous_info_end:
-            app_user.previous_info_end = end_date
-
-        app_user.save()
-
     return result
 
-def retrieve_info_from_db(app_user, start_date, end_date):
+def retrieve_info_from_db(app_user: AppUser, start_date: datetime, end_date: datetime):
+    """
+    retrieve data from db.
+    :param app_user:
+    :param start_date:
+    :param end_date:
+    :return:
+    """
     result = {}
     target_date = start_date
     standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
@@ -408,5 +467,4 @@ def retrieve_info_from_db(app_user, start_date, end_date):
 
     return result
 
-############################################## consumption functions below ##############################################
 

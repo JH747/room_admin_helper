@@ -1,7 +1,10 @@
+import time
+
 from django.db.models.functions import ExtractYear, ExtractMonth
 
 import requests
 from selenium import webdriver
+from selenium.common import TimeoutException
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
@@ -9,40 +12,17 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-from datetime import datetime, timedelta
+from datetime import timedelta, date, datetime
 from dateutil.relativedelta import relativedelta
 from bs4 import BeautifulSoup
 
 from api.models import PlatformsRoomsInfo, PlatformsAuthInfo, StandardRoomsInfo, PreviousInfo, SupplyConsumption, Supply, AppUser
 
+import pprint
 
-def crawler(app_user: AppUser, start_date: datetime, end_date: datetime, year_months: list[tuple[int,int]]):
-    """
-    crawl data from websites using selenium. implicitly use bot_yapen, bot_yogei functions.
-    :param app_user:
-    :param start_date:
-    :param end_date:
-    :param year_months: if this parameter - list of (year,month) tuples - is given, function ignores start_date, end_date and uses this parameter
-    :return:
-    """
-    chrome_options = Options()
-    chrome_options.add_argument("--no-sandbox")  # 리눅스 환경에서 필요할 수 있음
-    chrome_options.add_argument("--disable-dev-shm-usage")  # 메모리 부족 문제 해결
-    chrome_options.add_argument("--window-size=1920,1080")  # 적절한 화면 크기 설정
-    chrome_options.add_argument("--disable-notifications")
-
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
-    # implicitly waits for existence of every target element
-    driver.implicitly_wait(15)
-
-    platform_info = PlatformsAuthInfo.objects.get(appUser=app_user)
-    info_yapen = bot_yapen(driver, start_date, end_date, year_months, platform_info)
-    info_yogei = bot_yogei(driver, start_date, end_date, year_months, platform_info)
-    driver.quit()
-    return info_yapen, info_yogei
 
 ######## 3 main functions start
-def retriever(app_user: AppUser, start_date: datetime, end_date: datetime):
+def retriever(app_user: AppUser, start_date: date, end_date: date):
     """
     data retrieve mode collects data from web and collecting or updating data from and to database's previous_info table.
     collected data will be used for making prediction model or providing data to front for visualization of data.
@@ -61,7 +41,7 @@ def retriever(app_user: AppUser, start_date: datetime, end_date: datetime):
 
     target_year_months = []
     result = {}
-    curr = datetime(start_date.year, start_date.month, 1) # first day of each month
+    curr = date(start_date.year, start_date.month, 1) # first day of each month
     # retrieved from db below
     while curr <= end_date:
         if (curr.year, curr.month) in existing_year_month:
@@ -70,15 +50,18 @@ def retriever(app_user: AppUser, start_date: datetime, end_date: datetime):
             target_year_months.append((curr.year, curr.month)) # store months that should be from retrieved from crawling
         curr = curr + relativedelta(months=1)
     # retrieved from web below
+    if not target_year_months:
+        # do not move into crawler if empty
+        return result
     info_yapen, info_yogei = crawler(app_user, None, None, target_year_months)
     for target_year_month in target_year_months:
-        st = datetime(target_year_month[0], target_year_month[1], 1)
-        ed = datetime(target_year_month[0], target_year_month[1], 1) + relativedelta(months=1) - relativedelta(days=1)
+        st = date(target_year_month[0], target_year_month[1], 1)
+        ed = date(target_year_month[0], target_year_month[1], 1) + relativedelta(months=1) - relativedelta(days=1)
         result.update(retrieve_info_from_bs(app_user, st, ed, info_yapen, info_yogei))
 
     return result
 
-def detector(app_user: AppUser, start_date: datetime, end_date: datetime):
+def detector(app_user: AppUser, start_date: date, end_date: date):
     """
     detector mode used for checking rooms mismatch or overbooked.
     processes dates subsequent from current date.
@@ -187,7 +170,7 @@ def detector(app_user: AppUser, start_date: datetime, end_date: datetime):
     #
     # return result
 
-def supply_warner(app_user: AppUser, start_date: datetime, end_date: datetime):
+def supply_warner(app_user: AppUser, start_date: date, end_date: date):
     """
     supply warn mode used for checking evident shortage of supplies.
     processes dates subsequent from current date.
@@ -238,13 +221,60 @@ def supply_warner(app_user: AppUser, start_date: datetime, end_date: datetime):
 
 ############################################## crawling functions below ##############################################
 
+def wait_until_page_fully_loaded(driver, month, timeout=30):
+    """
+    wait until page fully loaded
+    :param driver:
+    :param month:
+    :param timeout:
+    :return: True if page fully loaded
+    """
+    try:
+        WebDriverWait(driver, 5).until(lambda d: d.execute_script("return document.readyState === 'complete'"))
+        # WebDriverWait(driver, timeout).until(lambda d: d.execute_script('return window.isPageLoaded') == 'true')
+        WebDriverWait(driver, 5).until(lambda d: d.execute_script('return window.jQuery != undefined && jQuery.active == 0'))
+        # css-11r9wyy e1n6gliz1 - elements that would exist for data prior today
+        # css-17oiwyz e1n6gliz1 - elements that would exist for data from and after today
+        if month <= datetime.now().month:
+            WebDriverWait(driver, timeout).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-17oiwyz")))
+        else:
+            WebDriverWait(driver, timeout).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-11r9wyy")))
+        return True
+    except TimeoutException:
+        return False
+
+def crawler(app_user: AppUser, start_date: date, end_date: date, year_months: list[tuple[int,int]]):
+    """
+    crawl data from websites using selenium. implicitly use bot_yapen, bot_yogei functions.
+    :param app_user:
+    :param start_date:
+    :param end_date:
+    :param year_months: if this parameter - list of (year,month) tuples - is given, function ignores start_date, end_date and uses this parameter
+    :return:
+    """
+    chrome_options = Options()
+    chrome_options.add_argument("--no-sandbox")  # 리눅스 환경에서 필요할 수 있음
+    chrome_options.add_argument("--disable-dev-shm-usage")  # 메모리 부족 문제 해결
+    chrome_options.add_argument("--window-size=1920,1080")  # 적절한 화면 크기 설정
+    chrome_options.add_argument("--disable-notifications")
+
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    # implicitly waits for existence of every target element
+    driver.implicitly_wait(15)
+
+    platform_info = PlatformsAuthInfo.objects.get(appUser=app_user)
+    info_yapen = bot_yapen(driver, start_date, end_date, year_months, platform_info)
+    info_yogei = bot_yogei(driver, start_date, end_date, year_months, platform_info)
+    driver.quit()
+    return info_yapen, info_yogei
+
 def generate_url_yapen(year, month):
     # eg: https://ceo.yapen.co.kr/rev/calendar?setDate=2024-10
     param = f"setDate={year}-{month}"
     url = f"https://ceo.yapen.co.kr/rev/calendar?{param}"
     return url
 
-def get_one_month_yapen(session, target_date: datetime):
+def get_one_month_yapen(session, target_date: date):
     year = target_date.year
     month = target_date.month
     url = generate_url_yapen(year, month)
@@ -256,7 +286,7 @@ def get_one_month_yapen(session, target_date: datetime):
     month_info = {}
     for day in days:
         date_str = day.parent.find('div', attrs={"class": "dayTitle"}).find('b').string
-        date_obj = datetime(year=year, month=month, day=int(date_str))
+        date_obj = date(year=year, month=month, day=int(date_str))
 
         siblings = day.find_all('td', attrs={"class": "checkLayer"})
         day_info = {}
@@ -288,7 +318,7 @@ def get_one_month_yapen(session, target_date: datetime):
 
     return month_info
 
-def bot_yapen(driver, start_date: datetime, end_date: datetime, year_months: list[tuple[int,int]], platform_info: PlatformsAuthInfo):
+def bot_yapen(driver, start_date: date, end_date: date, year_months: list[tuple[int,int]], platform_info: PlatformsAuthInfo):
     ## login
     driver.get('https://ceo.yapen.co.kr')
     id_input = driver.find_element(By.ID, "ceoID")
@@ -310,7 +340,7 @@ def bot_yapen(driver, start_date: datetime, end_date: datetime, year_months: lis
     info = {}
     if year_months:
         for year_month in year_months:
-            target_date = datetime(year_month[0], year_month[1], 1)
+            target_date = date(year_month[0], year_month[1], 1)
             info.update(get_one_month_yapen(session, target_date))
     else:
         target_date = start_date.replace(day=1)
@@ -326,26 +356,30 @@ def generate_url_yogei(year, month):
     url = f"https://partner.goodchoice.kr/sales/status?{param}"
     return url
 
-def get_one_month_yogei(driver, target_date: datetime):
+def get_one_month_yogei(driver, target_date: date):
     year = target_date.year
     month = target_date.month
     url = generate_url_yogei(year, month)
     driver.get(url)
 
+    # wait until dynamic page elements loaded
+    wait_until_page_fully_loaded(driver, 15)
+    if not wait_until_page_fully_loaded(driver=driver, month=month):
+        print("Page not fully loaded within given time")
+        return {}
     if month == datetime.now().month:
         hide_previous_btn = WebDriverWait(driver, 15).until(expected_conditions.presence_of_element_located((By.CLASS_NAME, "css-qdf8m4"))).find_element(By.TAG_NAME, 'button')
         hide_previous_btn.click()
-    WebDriverWait(driver, 15).until(expected_conditions.presence_of_all_elements_located((By.CLASS_NAME, "css-m6bnnw")))
+        time.sleep(1)
 
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml')
     days = soup.find_all('td', {'class': 'css-m6bnnw eg699vq6'})
-
     month_info = {}
     for day in days:
         day_info = {}
         date_str = day.find('span', {'class': 'eg699vq3'}).string
-        date_obj = datetime(year=year, month=month, day=int(date_str))
+        date_obj = date(year=year, month=month, day=int(date_str))
         rooms = day.find_all('div', {'class': 'css-17oiwyz e1n6gliz1'}) # shadowed
         if not rooms:
             rooms = day.find_all('div', {'class': 'css-11r9wyy e1n6gliz1'}) # not shadowed
@@ -371,7 +405,7 @@ def get_one_month_yogei(driver, target_date: datetime):
 
     return month_info
 
-def bot_yogei(driver, start_date: datetime, end_date: datetime, year_months: list[tuple[int,int]], platform_info: PlatformsAuthInfo):
+def bot_yogei(driver, start_date: date, end_date: date, year_months: list[tuple[int,int]], platform_info: PlatformsAuthInfo):
     ## login
     driver.get('https://partner.goodchoice.kr/')
     id_input = driver.find_element(By.NAME, "userId")
@@ -394,8 +428,9 @@ def bot_yogei(driver, start_date: datetime, end_date: datetime, year_months: lis
     info = {}
     if year_months:
         for year_month in year_months:
-            target_date = datetime(year_month[0], year_month[1], 1)
-            info.update(get_one_month_yapen(driver, target_date))
+            target_date = date(year_month[0], year_month[1], 1)
+            tmp = get_one_month_yogei(driver, target_date)
+            info.update(tmp)
     else:
         target_date = start_date.replace(day=1)
         while target_date <= end_date:
@@ -406,7 +441,7 @@ def bot_yogei(driver, start_date: datetime, end_date: datetime, year_months: lis
 
 ############################################## retriever functions below ##############################################
 
-def retrieve_info_from_bs(app_user: AppUser, start_date: datetime, end_date: datetime, info_yapen, info_yogei):
+def retrieve_info_from_bs(app_user: AppUser, start_date: date, end_date: date, info_yapen, info_yogei):
     """
     rearrange data arranged at bot_yapen and bot_yogei by extracting booked info only.
     update db's previous_info table.
@@ -445,7 +480,7 @@ def retrieve_info_from_bs(app_user: AppUser, start_date: datetime, end_date: dat
 
     return result
 
-def retrieve_info_from_db(app_user: AppUser, start_date: datetime, end_date: datetime):
+def retrieve_info_from_db(app_user: AppUser, start_date: date, end_date: date):
     """
     retrieve data from db.
     :param app_user:
@@ -460,7 +495,7 @@ def retrieve_info_from_db(app_user: AppUser, start_date: datetime, end_date: dat
         day = {}
         for standard_room_info in standard_room_infos:
             tmp = PreviousInfo.objects.get(appUser=app_user, standard_room_info=standard_room_info, date=target_date)
-            day.update({tmp.standard_room_name: {'yapen': tmp.yapen_booked, 'yogei': tmp.yogei_booked}})
+            day.update({standard_room_info.room_name: {'yapen': tmp.yapen_booked, 'yogei': tmp.yogei_booked}})
 
         result.update({target_date.strftime('%Y-%m-%d'): day})
         target_date += timedelta(days=1)

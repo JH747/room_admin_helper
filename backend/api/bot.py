@@ -181,19 +181,33 @@ def supply_warner(app_user: AppUser, start_date: date, end_date: date):
     """
     info_yapen, info_yogei = crawler(app_user, start_date, end_date, None)
 
-    target_date = start_date
     standard_room_infos = StandardRoomsInfo.objects.filter(appUser=app_user).order_by('display_order')
-    supplys = Supply.objects.filter(appUser=app_user)
-    nec_sup_cnt = {}
-    for supply in supplys:
-        nec_sup_cnt.update({supply: 0})
+    supplies = Supply.objects.filter(appUser=app_user)
+    result = {}
+    # supplies remaining according to DB
+    # existing_sup_cnt = {}
+    for supply in supplies:
+        result.update({supply.name: {'existing': supply.current_quantity}})
+        # existing_sup_cnt.update({supply.name: supply.current_quantity})
+    # supplies desired according to DB
+    # desired_sup_cnt = {}
+    for supply in supplies:
+        result[supply.name].update({'desired': supply.desired_quantity})
+        # desired_sup_cnt.update({supply.name: supply.desired_quantity})
+    # necessary supplies for given time period
+    # nec_sup_cnt = {}
+    for supply in supplies:
+        result[supply.name].update({'necessary': 0})
+        # nec_sup_cnt.update({supply.name: 0})
+
+    target_date = start_date
     while target_date <= end_date:
         day_yapen = info_yapen.get(target_date)
         day_yogei = info_yogei.get(target_date)
-        day = {}
+        # for each room type
         for standard_room_info in standard_room_infos:
-            standard_room_name = standard_room_info.room_name
             booked = 0
+            # for each room corresponding each room type
             platform_room_infos = PlatformsRoomsInfo.objects.filter(standard_room_info=standard_room_info)
             for platform_room_info in platform_room_infos:
                 yapen_rn = platform_room_info.yapen_room_name
@@ -202,19 +216,19 @@ def supply_warner(app_user: AppUser, start_date: date, end_date: date):
                     booked += 1
                 if day_yogei.get(yogei_rn) == 2:
                     booked += 1
-
+            # now, booked == (# of certain room type booked at target date)
+            # for each supply_consumptions of certain room type
             supply_consumptions = SupplyConsumption.objects.filter(standard_room_info=standard_room_info)
             for supply_consumption in supply_consumptions:
-                num = nec_sup_cnt[supply_consumption.supply]
-                nec_sup_cnt[supply_consumption.supply] = num + supply_consumption.consumption
+                result[supply_consumption.supply.name]['necessary'] += supply_consumption.consumption * booked
+                # nec_sup_cnt[supply_consumption.supply.name] += supply_consumption.consumption * booked
 
         target_date += timedelta(days=1)
 
-    result = {}
-    for supply in supplys:
-        if nec_sup_cnt[supply] > supply.current_quantity:
-            result.update({supply.name: nec_sup_cnt[supply] - supply.current_quantity})
-
+    # result = {}
+    # result.update({'existing': existing_sup_cnt})
+    # result.update({'necessary': nec_sup_cnt})
+    # result.update({'desired': desired_sup_cnt})
     return result
 
 ######## end

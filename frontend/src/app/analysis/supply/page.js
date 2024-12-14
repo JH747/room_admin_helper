@@ -23,7 +23,7 @@ export default function Page() {
     // console.log(session.token);
 
     const eventSource = new EventSource(
-      `/api/proxy_retrieve_info?start_date=${sDate}&end_date=${eDate}&mode=detect`,
+      `/api/proxy_retrieve_info?start_date=${sDate}&end_date=${eDate}&mode=supply_warn`,
       {
         headers: {
           Authorization: `Bearer ${session.token}`,
@@ -86,23 +86,32 @@ export default function Page() {
         </button>
       </div>
       <div>
-        <h1>Problems</h1>
+        <h1>Inventory</h1>
         {isDataVisible && (
-          <div>
-            {Object.keys(data).map((date) => (
-              <div key={date} style={{ marginBottom: '20px' }}>
-                <h2>{date}</h2>
-                <ul>
-                  {data[date].map((item, index) => (
-                    <li key={index}>
-                      <strong>Problem:</strong> {item.problem} |{' '}
-                      <strong>Room Type:</strong> {item.room_type}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <table
+            border="1"
+            cellPadding="10"
+            style={{ borderCollapse: 'collapse' }}
+          >
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Existing</th>
+                <th>Necessary</th>
+                <th>Desired</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(data).map((product) => (
+                <tr key={product}>
+                  <td>{product}</td>
+                  <td>{data[product].existing}</td>
+                  <td>{data[product].necessary}</td>
+                  <td>{data[product].desired}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

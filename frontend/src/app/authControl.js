@@ -37,6 +37,21 @@ export function AuthControl() {
           Set Rooms
         </a>
       </li>
+      <li>
+        <a href="/analysis/retrieve" className="hover:underline">
+          Graph
+        </a>
+      </li>
+      <li>
+        <a href="/analysis/detect" className="hover:underline">
+          Detect
+        </a>
+      </li>
+      <li>
+        <a href="/analysis/supply" className="hover:underline">
+          Supply
+        </a>
+      </li>
     </>
   ) : (
     <>

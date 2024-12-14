@@ -2,12 +2,12 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const start_date = searchParams.get('start_date');
   const end_date = searchParams.get('end_date');
-  const detector_mode = searchParams.get('detector_mode');
+  const mode = searchParams.get('mode');
 
   try {
     const clientAuthHeader = request.headers.get('Authorization');
     const djangoResponse = await fetch(
-      `http://127.0.0.1:8080/analysis/test?start_date=${start_date}&end_date=${end_date}&detector_mode=${detector_mode}`,
+      `http://127.0.0.1:8080/analysis/general?start_date=${start_date}&end_date=${end_date}&mode=${mode}`,
       {
         method: 'GET',
         headers: {

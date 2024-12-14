@@ -99,13 +99,13 @@ def detector(app_user: AppUser, start_date: date, end_date: date):
                         #                'room_type': standard_room_name})
                         day_problems.append({'problem': 'mismatch',
                                        'room_type': standard_room_name})
-                        print('mismatch\t', target_date, '\t', standard_room_name)
+                        print('mismatch\t', target_date, '\t', standard_room_name) # TODO: erase
 
             if booked > standard_room_info.room_quantity:
                 # result.append({'date': target_date.strftime('%Y-%m-%d'), 'problem': 'overbooked', 'room_type': standard_room_name})
                 day_problems.append({'problem': 'overbooked',
                                      'room_type': standard_room_name})
-                print('overbooked\t', target_date, '\t', standard_room_name)
+                print('overbooked\t', target_date, '\t', standard_room_name) # TODO: erase
 
         if day_problems:
             result.update({target_date.strftime('%Y-%m-%d'): day_problems})
@@ -221,24 +221,34 @@ def supply_warner(app_user: AppUser, start_date: date, end_date: date):
 
 ############################################## crawling functions below ##############################################
 
-def wait_until_page_fully_loaded(driver, month, timeout=30):
+def wait_until_page_fully_loaded(driver, target_date: date, timeout=30):
     """
     wait until page fully loaded
     :param driver:
-    :param month:
+    :param target_date:
     :param timeout:
     :return: True if page fully loaded
     """
     try:
         WebDriverWait(driver, 5).until(lambda d: d.execute_script("return document.readyState === 'complete'"))
-        # WebDriverWait(driver, timeout).until(lambda d: d.execute_script('return window.isPageLoaded') == 'true')
+        # WebDriverWait(driver, timeout).until(lambda d: d.execute_script('return window.isPageLoaded') == 'true') # does not work for this url
         WebDriverWait(driver, 5).until(lambda d: d.execute_script('return window.jQuery != undefined && jQuery.active == 0'))
-        # css-11r9wyy e1n6gliz1 - elements that would exist for data prior today
-        # css-17oiwyz e1n6gliz1 - elements that would exist for data from and after today
-        if month <= datetime.now().month:
+        # css-11r9wyy e1n6gliz1 - elements that would exist for data prior today, gray
+        # css-17oiwyz e1n6gliz1 - elements that would exist for data from and after today, white
+        # even if target month is this month, there may be no class name 17oiwyz element if today is the first day of the month
+        if (target_date <= datetime.now().date()) & (datetime.now().day != 1) :
             WebDriverWait(driver, timeout).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-17oiwyz")))
         else:
             WebDriverWait(driver, timeout).until(expected_conditions.visibility_of_element_located((By.CLASS_NAME, "css-11r9wyy")))
+        # passed away weeks of this month will be hidden
+        if target_date.month == datetime.now().month:
+            hide_previous_btn = WebDriverWait(driver, 5).until(
+                expected_conditions.presence_of_element_located((By.CLASS_NAME, "css-qdf8m4"))).find_element(
+                By.TAG_NAME, 'button')
+            # if one week not yet passed of this month, there may be no hidden elements
+            if hide_previous_btn:
+                hide_previous_btn.click()
+            time.sleep(1)
         return True
     except TimeoutException:
         return False
@@ -275,6 +285,12 @@ def generate_url_yapen(year, month):
     return url
 
 def get_one_month_yapen(session, target_date: date):
+    """
+
+    :param session:
+    :param target_date: used to indicate target year and month, day should be first day of month
+    :return:
+    """
     year = target_date.year
     month = target_date.month
     url = generate_url_yapen(year, month)
@@ -357,20 +373,22 @@ def generate_url_yogei(year, month):
     return url
 
 def get_one_month_yogei(driver, target_date: date):
+    """
+
+    :param driver:
+    :param target_date: used to indicate target year and month, day should be first day of month
+    :return:
+    """
     year = target_date.year
     month = target_date.month
     url = generate_url_yogei(year, month)
     driver.get(url)
 
     # wait until dynamic page elements loaded
-    wait_until_page_fully_loaded(driver, 15)
-    if not wait_until_page_fully_loaded(driver=driver, month=month):
-        print("Page not fully loaded within given time")
+    wait_until_page_fully_loaded(driver, target_date, 15)
+    if not wait_until_page_fully_loaded(driver=driver, target_date=target_date):
+        print("Page not fully loaded within given time") # TODO: replace this with logging
         return {}
-    if month == datetime.now().month:
-        hide_previous_btn = WebDriverWait(driver, 15).until(expected_conditions.presence_of_element_located((By.CLASS_NAME, "css-qdf8m4"))).find_element(By.TAG_NAME, 'button')
-        hide_previous_btn.click()
-        time.sleep(1)
 
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml')
@@ -501,5 +519,4 @@ def retrieve_info_from_db(app_user: AppUser, start_date: date, end_date: date):
         target_date += timedelta(days=1)
 
     return result
-
 

@@ -9,7 +9,7 @@ import java.util.List;
 public interface StandardRoomsInfoRepository extends JpaRepository<StandardRoomsInfo, Integer> {
 
 
-    StandardRoomsInfo findByRoomName(String standard_room_name);
+    StandardRoomsInfo findByRoomNameAndAppUser(String standard_room_name, AppUser appUser);
     List<StandardRoomsInfo> findByAppUser(AppUser appUser);
 
 }

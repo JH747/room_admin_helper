@@ -1,5 +1,8 @@
 package com.example.backend_spring.controller;
 
+import com.example.backend_spring.dto.PlatformsAuthInfoDTO;
+import com.example.backend_spring.dto.PlatformsRoomsInfoDTO;
+import com.example.backend_spring.dto.StandardRoomsInfoDTO;
 import com.example.backend_spring.entity.PlatformsAuthInfo;
 import com.example.backend_spring.entity.PlatformsRoomsInfo;
 import com.example.backend_spring.entity.StandardRoomsInfo;
@@ -17,81 +20,69 @@ import java.util.List;
 @RequestMapping("/settings")
 public class SettingsController {
 
-    private final AppUserService appUserService;
     private final SettingsService settingsService;
 
-    public SettingsController(AppUserService appUserService,
-                              SettingsService settingsService) {
-        this.appUserService = appUserService;
+    public SettingsController(SettingsService settingsService) {
         this.settingsService = settingsService;
     }
 
     @PostMapping("/platformsAuthInfo")
-    public ResponseEntity<String> setPlatformAuth(@RequestBody PlatformsAuthInfo authInfo){
+    public ResponseEntity<String> setPlatformAuthInfo(@RequestBody PlatformsAuthInfoDTO platformsAuthInfoDTO){
+        // create, update, delete
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        settingsService.createPlatformsAuthInfo(authInfo, username);
-
-        return ResponseEntity.ok("PlatformsAuthInfo Setting succeeded");
+        settingsService.setPlatformsAuthInfo(platformsAuthInfoDTO, username);
+        return ResponseEntity.status(HttpStatus.OK).body("PlatformsAuthInfo Setting succeeded");
     }
     @GetMapping("/platformsAuthInfo")
     public ResponseEntity<PlatformsAuthInfo> getPlatformAuthInfo(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         PlatformsAuthInfo entity = settingsService.getPlatformsAuthInfo(username);
-
-        return ResponseEntity.ok(entity);
+        return ResponseEntity.status(HttpStatus.OK).body(entity);
     }
 
+
     @PostMapping("/standardRoomsInfo")
-    public ResponseEntity<String> setStandardRoomsInfo(@RequestBody StandardRoomsInfo standardRoomsInfo){
+    public ResponseEntity<String> setStandardRoomsInfo(@RequestBody StandardRoomsInfoDTO standardRoomsInfoDTO,
+                                                       @RequestParam(defaultValue = "false") boolean delete){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        settingsService.createStandardRoomsInfo(standardRoomsInfo, username);
-
-        return ResponseEntity.ok("StandardRoomsInfo Setting succeeded");
+        if(delete) settingsService.deleteStandardRoomsInfo(standardRoomsInfoDTO, username);
+        else settingsService.createStandardRoomsInfo(standardRoomsInfoDTO, username);
+        return ResponseEntity.status(HttpStatus.OK).body("StandardRoomsInfo Setting succeeded");
     }
     @GetMapping("/standardRoomsInfo")
     public ResponseEntity<List<StandardRoomsInfo>> getStandardRoomsInfo(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         List<StandardRoomsInfo> entities = settingsService.getStandardRoomsInfo(username);
-
-        return ResponseEntity.ok(entities);
+        return ResponseEntity.status(HttpStatus.OK).body(entities);
     }
+
 
     @PostMapping("/platformsRoomsInfo")
-    public ResponseEntity<String> setPlatformsRoomsInfo(@RequestBody HashMap<String, Object> data){
-        String standard_room_name = (String) data.get("standardRoomName");
-        String yapen_room_name = (String) data.get("yapenRoomName");
-        String yogei_room_name = (String) data.get("yogeiRoomName");
+    public ResponseEntity<String> setPlatformsRoomsInfo(@RequestBody PlatformsRoomsInfoDTO platformsRoomsInfoDTO,
+                                                        @RequestParam(defaultValue = "false") boolean delete){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-
-        PlatformsRoomsInfo platformsRoomsInfo = new PlatformsRoomsInfo();
-        platformsRoomsInfo.setYapenRoomName(yapen_room_name);
-        platformsRoomsInfo.setYogeiRoomName(yogei_room_name);
-        settingsService.createPlatformsRoomsInfo(platformsRoomsInfo, username, standard_room_name);
-
-        return ResponseEntity.ok("PlatformsRoomsInfo Setting succeeded");
-
-        // ------------------------------------------------------------------------- displayorder 입력 누락
+        if(delete) settingsService.deletePlatformsRoomsInfo(platformsRoomsInfoDTO, username);
+        else settingsService.createPlatformsRoomsInfo(platformsRoomsInfoDTO, username);
+        return ResponseEntity.status(HttpStatus.OK).body("PlatformsRoomsInfo Setting succeeded");
     }
     @GetMapping("/platformsRoomsInfo")
-    public ResponseEntity<List<PlatformsRoomsInfo>> getPlatformsRoomsInfo(){
+    public ResponseEntity<List<PlatformsRoomsInfoDTO>> getPlatformsRoomsInfo(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        List<PlatformsRoomsInfo> entities = settingsService.getPlatformsRoomsInfo(username);
-
-        return ResponseEntity.ok(entities);
-
-        // ------------------------------------------------------------------------- 반환시 standardroomname 누락
+        List<PlatformsRoomsInfoDTO> data = settingsService.getPlatformsRoomsInfo(username);
+        return ResponseEntity.status(HttpStatus.OK).body(data);
     }
 
+
+    // controller 내부 전역 예외처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleSpecificControllerExceptions(Exception e){
         e.printStackTrace();
-
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Internal Server Error");
     }

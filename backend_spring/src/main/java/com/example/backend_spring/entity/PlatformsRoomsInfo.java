@@ -7,6 +7,10 @@ import lombok.Setter;
 
 @Entity
 @Getter @Setter
+@Table(name = "platforms_rooms_info",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"app_user_id", "display_order"})
+        })
 public class PlatformsRoomsInfo {
 
     @Id

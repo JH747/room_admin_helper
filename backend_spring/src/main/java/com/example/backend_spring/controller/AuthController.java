@@ -2,6 +2,7 @@ package com.example.backend_spring.controller;
 
 import com.example.backend_spring.JWTUtil;
 
+import com.example.backend_spring.dto.AppUserDTO;
 import com.example.backend_spring.service.AppUserService;
 import com.example.backend_spring.service.EmailService;
 import com.example.backend_spring.service.UserSecurityService;
@@ -38,43 +39,32 @@ public class AuthController {
     }
 
     @PostMapping("/sendcode")
-    public ResponseEntity<String> sendCode(@RequestBody HashMap<String, Object> userData) {
-        String email = (String) userData.get("email");
-
-        emailService.sendCode(email);
-        return ResponseEntity.ok(String.format("Verification mail successfully sent to %s", email));
+    public ResponseEntity<String> sendCode(@RequestBody AppUserDTO appUserDTO) {
+        // email format verified at front
+        emailService.sendCode(appUserDTO.getEmail());
+        return ResponseEntity.ok(String.format("Verification mail successfully sent to %s", appUserDTO.getEmail()));
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody HashMap<String, Object> userData){
-        String username = (String) userData.get("id");
-        String password = (String) userData.get("pass");
-        String email = (String) userData.get("email");
-        String code = (String) userData.get("code");
-
-        if(!emailService.verifyCode(email, code)) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Wrong verification code");
-
+    public ResponseEntity<String> signup(@RequestBody AppUserDTO appUserDTO){
+        if(!emailService.verifyCode(appUserDTO.getEmail(), appUserDTO.getCode())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Wrong verification code");
+        }
         try{
-            appUserService.create(username, password, email);
+            appUserService.create(appUserDTO.getId(), appUserDTO.getPass(), appUserDTO.getEmail());
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicating username");
         }
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(String.format("User %s created successfully", username));
+        return ResponseEntity.status(HttpStatus.CREATED).body(String.format("User %s created successfully", appUserDTO.getId()));
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<String> signin(@RequestBody HashMap<String, Object> userData){
-        String username = (String) userData.get("id");
-        String password = (String) userData.get("pass");
-
+    public ResponseEntity<String> signin(@RequestBody AppUserDTO appUserDTO){
         try{
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(appUserDTO.getId(), appUserDTO.getPass()));
+            UserDetails userDetails = userDetailsService.loadUserByUsername(appUserDTO.getId());
             String token = jwtUtil.generateToken(userDetails.getUsername());
-
             return ResponseEntity.ok(token);
-
         }catch (BadCredentialsException e){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Credentials");
         }

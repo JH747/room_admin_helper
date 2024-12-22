@@ -19,7 +19,7 @@ public class AppUser implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @OneToOne(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true) // foreign key field name of referencing entity not table column!
+    @OneToOne(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true) // foreign key field name of referencing entity, not table column!
     private PlatformsAuthInfo platformsAuthInfo;
 
     @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -33,6 +33,9 @@ public class AppUser implements UserDetails {
 
     @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Supply> supplies =  new ArrayList<>();
+
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Customer> customers = new ArrayList<>();
 
     @Column(nullable = false, unique = true)
     private String username;

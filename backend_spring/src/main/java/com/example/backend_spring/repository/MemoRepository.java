@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface MemoRepository extends JpaRepository<Memo, Integer> {
 
+    Memo findById(int id);
     List<Memo> findByAppUser(AppUser appUser);
 
 }

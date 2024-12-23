@@ -33,6 +33,10 @@ public class JWTUtil {
         return extractClaims(token).getSubject();
     }
 
+    public String extractExpiration(String token) {
+        return extractClaims(token).getExpiration().toString();
+    }
+
     public boolean isTokenValid(String token, String username) {
         try {
             return extractUsername(token).equals(username);

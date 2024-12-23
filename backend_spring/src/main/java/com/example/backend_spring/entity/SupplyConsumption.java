@@ -2,12 +2,15 @@ package com.example.backend_spring.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "supply_consumption",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"app_user_id", "standard_room_info_id", "supply_id"})
         })
+@Getter @Setter
 public class SupplyConsumption {
 
     @Id

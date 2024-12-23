@@ -1,11 +1,6 @@
 package com.example.backend_spring.controller;
 
-import com.example.backend_spring.dto.PlatformsAuthInfoDTO;
-import com.example.backend_spring.dto.PlatformsRoomsInfoDTO;
-import com.example.backend_spring.dto.StandardRoomsInfoDTO;
-import com.example.backend_spring.entity.PlatformsAuthInfo;
-import com.example.backend_spring.entity.PlatformsRoomsInfo;
-import com.example.backend_spring.entity.StandardRoomsInfo;
+import com.example.backend_spring.dto.*;
 import com.example.backend_spring.service.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +16,11 @@ import java.util.List;
 public class SettingsController {
 
     private final SettingsService settingsService;
+    private final SupplyService supplyService;
 
-    public SettingsController(SettingsService settingsService) {
+    public SettingsController(SettingsService settingsService, SupplyService supplyService) {
         this.settingsService = settingsService;
+        this.supplyService = supplyService;
     }
 
     @PostMapping("/platformsAuthInfo")
@@ -75,6 +72,42 @@ public class SettingsController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         List<PlatformsRoomsInfoDTO> data = settingsService.getPlatformsRoomsInfo(username);
+        return ResponseEntity.status(HttpStatus.OK).body(data);
+    }
+
+
+    @PostMapping("/supply")
+    public ResponseEntity<String> setSupply(@RequestBody SupplyDTO supplyDTO,
+                                            @RequestParam(defaultValue = "false") boolean delete){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        if(delete) supplyService.deleteSupply(supplyDTO, username);
+        else supplyService.createSupply(supplyDTO, username);
+        return ResponseEntity.status(HttpStatus.OK).body("Supply Setting succeeded");
+    }
+    @GetMapping("/supply")
+    public ResponseEntity<List<SupplyDTO>> getSupply(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        List<SupplyDTO> data = supplyService.getSupply(username);
+        return ResponseEntity.status(HttpStatus.OK).body(data);
+    }
+
+
+    @PostMapping("supplyConsumption")
+    public ResponseEntity<String> setSupplyConsumption(@RequestBody SupplyConsumptionDTO supplyConsumptionDTO,
+                                                       @RequestParam(defaultValue = "false") boolean delete){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        if(delete) supplyService.deleteSupplyConsumption(supplyConsumptionDTO, username);
+        else supplyService.createSupplyConsumption(supplyConsumptionDTO, username);
+        return ResponseEntity.status(HttpStatus.OK).body("SupplyConsumption Setting succeeded");
+    }
+    @GetMapping("supplyConsumption")
+    public ResponseEntity<List<SupplyConsumptionDTO>> getSupplyConsumption(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        List<SupplyConsumptionDTO> data = supplyService.getSupplyConsumption(username);
         return ResponseEntity.status(HttpStatus.OK).body(data);
     }
 

@@ -34,26 +34,29 @@ public class SettingsService {
         this.platformsRoomsInfoRepository = platformsRoomsInfoRepository;
     }
 
-    public PlatformsAuthInfo setPlatformsAuthInfo(PlatformsAuthInfoDTO platformsAuthInfoDTO, String username) {
+    public void setPlatformsAuthInfo(PlatformsAuthInfoDTO platformsAuthInfoDTO, String username) {
         AppUser appUser = appUserRepository.findByUsername(username);
         PlatformsAuthInfo authInfo = platformsAuthInfoRepository.findByAppUser(appUser);
         if(authInfo != null){
             platformsAuthInfoRepository.delete(authInfo);
         }
         authInfo = new PlatformsAuthInfo();
-        // supports yapen, yogei by now
+        // supports yapen, yogei only by now
         authInfo.setAppUser(appUser);
         authInfo.setYapenId(platformsAuthInfoDTO.getYapenId());
         authInfo.setYapenPass(platformsAuthInfoDTO.getYapenPass());
         authInfo.setYogeiId(platformsAuthInfoDTO.getYogeiId());
         authInfo.setYogeiPass(platformsAuthInfoDTO.getYogeiPass());
         platformsAuthInfoRepository.save(authInfo);
-        return authInfo;
     }
-
-    public PlatformsAuthInfo getPlatformsAuthInfo(String username) {
+    public PlatformsAuthInfoDTO getPlatformsAuthInfo(String username) {
         AppUser appUser = appUserRepository.findByUsername(username);
-        return platformsAuthInfoRepository.findByAppUser(appUser);
+        PlatformsAuthInfo pai = platformsAuthInfoRepository.findByAppUser(appUser);
+        PlatformsAuthInfoDTO paiDTO = new PlatformsAuthInfoDTO();
+        // supports yapen, yogei only by now
+        paiDTO.setYapenId(pai.getYapenId());
+        paiDTO.setYogeiId(pai.getYogeiId());
+        return paiDTO;
     }
 
     public void createStandardRoomsInfo(StandardRoomsInfoDTO standardRoomsInfoDTO, String username) {
@@ -70,9 +73,18 @@ public class SettingsService {
         StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(standardRoomsInfoDTO.getRoomName(), appUser);
         if(sri != null) standardRoomsInfoRepository.delete(sri);
     }
-    public List<StandardRoomsInfo> getStandardRoomsInfo(String username) {
+    public List<StandardRoomsInfoDTO> getStandardRoomsInfo(String username) {
         AppUser appUser = appUserRepository.findByUsername(username);
-        return standardRoomsInfoRepository.findByAppUser(appUser);
+        List<StandardRoomsInfo> sris = standardRoomsInfoRepository.findByAppUser(appUser);
+        List<StandardRoomsInfoDTO> sriDTOs = new ArrayList<>();
+        for(StandardRoomsInfo sri : sris){
+            StandardRoomsInfoDTO sriDTO = new StandardRoomsInfoDTO();
+            sriDTO.setRoomName(sri.getRoomName());
+            sriDTO.setRoomQuantity(sri.getRoomQuantity());
+            sriDTO.setDisplayOrder(sri.getDisplayOrder());
+            sriDTOs.add(sriDTO);
+        }
+        return sriDTOs;
     }
 
 

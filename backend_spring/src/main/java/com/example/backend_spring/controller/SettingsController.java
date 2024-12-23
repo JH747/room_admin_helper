@@ -35,11 +35,11 @@ public class SettingsController {
         return ResponseEntity.status(HttpStatus.OK).body("PlatformsAuthInfo Setting succeeded");
     }
     @GetMapping("/platformsAuthInfo")
-    public ResponseEntity<PlatformsAuthInfo> getPlatformAuthInfo(){
+    public ResponseEntity<PlatformsAuthInfoDTO> getPlatformAuthInfo(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        PlatformsAuthInfo entity = settingsService.getPlatformsAuthInfo(username);
-        return ResponseEntity.status(HttpStatus.OK).body(entity);
+        PlatformsAuthInfoDTO data = settingsService.getPlatformsAuthInfo(username);
+        return ResponseEntity.status(HttpStatus.OK).body(data);
     }
 
 
@@ -53,11 +53,11 @@ public class SettingsController {
         return ResponseEntity.status(HttpStatus.OK).body("StandardRoomsInfo Setting succeeded");
     }
     @GetMapping("/standardRoomsInfo")
-    public ResponseEntity<List<StandardRoomsInfo>> getStandardRoomsInfo(){
+    public ResponseEntity<List<StandardRoomsInfoDTO>> getStandardRoomsInfo(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        List<StandardRoomsInfo> entities = settingsService.getStandardRoomsInfo(username);
-        return ResponseEntity.status(HttpStatus.OK).body(entities);
+        List<StandardRoomsInfoDTO> data = settingsService.getStandardRoomsInfo(username);
+        return ResponseEntity.status(HttpStatus.OK).body(data);
     }
 
 

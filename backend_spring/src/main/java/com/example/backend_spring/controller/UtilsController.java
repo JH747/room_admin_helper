@@ -7,6 +7,7 @@ import com.example.backend_spring.entity.Memo;
 import com.example.backend_spring.entity.PlatformsRoomsInfo;
 import com.example.backend_spring.service.CustomerService;
 import com.example.backend_spring.service.MemoService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/utils")
 public class UtilsController {
@@ -62,4 +64,10 @@ public class UtilsController {
     }
 
 
+    // controller 내부 전역 예외처리
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleSpecificControllerExceptions(Exception e){
+        log.error("{}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
+    }
 }

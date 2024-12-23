@@ -2,6 +2,7 @@ package com.example.backend_spring.controller;
 
 import com.example.backend_spring.dto.*;
 import com.example.backend_spring.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/settings")
 public class SettingsController {
@@ -115,8 +117,7 @@ public class SettingsController {
     // controller 내부 전역 예외처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleSpecificControllerExceptions(Exception e){
-        e.printStackTrace();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Internal Server Error");
+        log.error("{}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
     }
 }

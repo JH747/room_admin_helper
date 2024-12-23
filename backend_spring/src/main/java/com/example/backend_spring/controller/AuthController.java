@@ -69,4 +69,12 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Credentials");
         }
     }
+
+
+    // controller 내부 전역 예외처리
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleSpecificControllerExceptions(Exception e){
+        log.error("{}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
+    }
 }

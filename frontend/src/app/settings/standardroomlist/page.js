@@ -3,13 +3,13 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getSession } from 'next-auth/react';
 
-export default function StandardRoomListPage() {
+export default function Page() {
   const router = useRouter();
   const [rooms, setRooms] = useState([]);
   const [newRoom, setNewRoom] = useState({
-    standard_room_name: '',
-    room_quantity: '',
-    display_order: '',
+    roomName: '',
+    roomQuantity: '',
+    displayOrder: '',
   });
 
   async function fetchData() {
@@ -17,115 +17,137 @@ export default function StandardRoomListPage() {
     if (!session) {
       router.push('/errorpages/403');
     }
-    const res1 = await fetch('http://127.0.0.1:8000/api/setstandardroominfo/', {
-      method: 'GET',
-      headers: { Authorization: `Token ${session.token}` },
-      withCredentials: true,
-    });
-    const data1 = await res1.json();
-    setRooms(data1);
+    const res1 = await fetch(
+      'http://127.0.0.1:8080/settings/standardRoomsInfo',
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${session.token}` },
+        withCredentials: true,
+      }
+    );
+    const data = await res1.json();
+    setRooms(data);
   }
 
   useEffect(() => {
     fetchData();
-    console.log(rooms);
   }, []);
 
-  const handleDelete = (id) => {
-    setRooms(rooms.filter((room) => room.id !== id));
-  };
+  async function handleDelete(room) {
+    const session = await getSession();
+    console.log(room);
+    console.log(session.token);
+    await fetch(
+      'http://127.0.0.1:8080/settings/standardRoomsInfo?delete=true',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({
+          roomName: room.roomName,
+          roomQuantity: room.roomQuantity,
+          displayOrder: room.displayOrder,
+        }),
+      }
+    );
+    fetchData();
+  }
 
-  const handleAdd = () => {
-    if (
-      !newRoom.standard_room_name &&
-      !newRoom.room_quantity &&
-      !newRoom.display_order
-    )
-      return;
-    const newRoomWithId = { ...newRoom, id: Date.now() };
-    setRooms([...rooms, newRoomWithId]);
-    setNewRoom({
-      standard_room_name: '',
-      room_quantity: '',
-      display_order: '',
-    });
-  };
+  async function handleAddRoom() {
+    if (newRoom.roomName && newRoom.roomQuantity && newRoom.displayOrder) {
+      const session = await getSession();
+      const addRes = await fetch(
+        'http://127.0.0.1:8080/settings/standardRoomsInfo',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.token}`,
+          },
+          body: JSON.stringify({
+            roomName: newRoom.roomName,
+            roomQuantity: newRoom.roomQuantity,
+            displayOrder: newRoom.displayOrder,
+          }),
+        }
+      );
+      console.log(addRes);
+      if (!addRes.ok) {
+        alert('Failed to add room. Check if display order is unique.');
+      }
+      setNewRoom({ roomName: '', roomQuantity: '', displayOrder: '' }); // 입력 필드 초기화
+    } else {
+      alert('모든 필드를 채워주세요.');
+    }
+    fetchData();
+  }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h2 className="text-2xl font-bold text-center mb-4">
-        Standard Room List
-      </h2>
-      <table className="w-full border">
-        <thead>
-          <tr>
-            <th className="border px-4 py-2">기준 객실 이름</th>
-            <th className="border px-4 py-2">객실 수량</th>
-            <th className="border px-4 py-2">정렬 순서</th>
-            <th className="border px-4 py-2">작업</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rooms.map((room) => (
-            <tr key={room.id}>
-              <td className="border px-4 py-2">{room.standard_room_name}</td>
-              <td className="border px-4 py-2">{room.room_quantity}</td>
-              <td className="border px-4 py-2">{room.display_order}</td>
-              <td className="border px-4 py-2">
-                <button
-                  className="bg-red-500 text-white p-1 rounded"
-                  onClick={() => handleDelete(room.id)}
-                >
-                  삭제
-                </button>
-              </td>
-            </tr>
-          ))}
-          <tr>
-            <td className="border px-4 py-2">
-              <input
-                type="text"
-                className="w-full p-1 border rounded"
-                placeholder="객실 이름"
-                value={newRoom.standard_room_name}
-                onChange={(e) =>
-                  setNewRoom({ ...newRoom, standard_room_name: e.target.value })
-                }
-              />
-            </td>
-            <td className="border px-4 py-2">
-              <input
-                type="number"
-                className="w-full p-1 border rounded"
-                placeholder="객실 수량"
-                value={newRoom.room_quantity}
-                onChange={(e) =>
-                  setNewRoom({ ...newRoom, room_quantity: e.target.value })
-                }
-              />
-            </td>
-            <td className="border px-4 py-2">
-              <input
-                type="number"
-                className="w-full p-1 border rounded"
-                placeholder="정렬 순서"
-                value={newRoom.display_order}
-                onChange={(e) =>
-                  setNewRoom({ ...newRoom, display_order: e.target.value })
-                }
-              />
-            </td>
-            <td className="border px-4 py-2">
-              <button
-                className="bg-blue-600 text-white p-1 rounded"
-                onClick={handleAdd}
-              >
-                등록
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div className="p-4 max-w-xl mx-auto">
+      {/* <p>{JSON.stringify(rooms)}</p> */}
+      <h1 className="text-2xl font-bold mb-4">Room Management</h1>
+      <div className="space-y-4">
+        {rooms.map((room, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between border p-2 rounded"
+          >
+            <div>
+              <p className="font-medium">Room Name: {room.roomName}</p>
+              <p>Quantity: {room.roomQuantity}</p>
+              <p>Order: {room.displayOrder}</p>
+            </div>
+            <button
+              onClick={() => handleDelete(room)}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+              Delete
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* 새로운 룸 생성 */}
+      <div className="mt-6 border-t pt-4">
+        <h2 className="text-lg font-bold mb-2">Add New Room</h2>
+        <div className="flex items-center space-x-2 mb-4">
+          <input
+            type="text"
+            placeholder="Room Name"
+            value={newRoom.roomName}
+            onChange={(e) =>
+              setNewRoom({ ...newRoom, roomName: e.target.value })
+            }
+            className="border p-2 rounded w-full"
+          />
+          <input
+            type="number"
+            placeholder="Quantity"
+            value={newRoom.roomQuantity}
+            onChange={(e) =>
+              setNewRoom({ ...newRoom, roomQuantity: e.target.value })
+            }
+            className="border p-2 rounded w-full"
+          />
+          <input
+            type="number"
+            placeholder="Display Order"
+            value={newRoom.displayOrder}
+            onChange={(e) =>
+              setNewRoom({ ...newRoom, displayOrder: e.target.value })
+            }
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <button
+          onClick={handleAddRoom}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Add Room
+        </button>
+      </div>
     </div>
   );
 }

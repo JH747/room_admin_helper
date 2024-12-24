@@ -28,28 +28,18 @@ export function AuthControl() {
         </button>
       </li>
       <li>
-        <a href="/settings/standardroomlist" className="hover:underline">
-          Set Standard Rooms
+        <a href="/settings" className="hover:underline">
+          Settings
         </a>
       </li>
       <li>
-        <a href="/settings/roomlist" className="hover:underline">
-          Set Rooms
+        <a href="/analysis" className="hover:underline">
+          Analysis
         </a>
       </li>
       <li>
-        <a href="/analysis/retrieve" className="hover:underline">
-          Graph
-        </a>
-      </li>
-      <li>
-        <a href="/analysis/detect" className="hover:underline">
-          Detect
-        </a>
-      </li>
-      <li>
-        <a href="/analysis/supply" className="hover:underline">
-          Supply
+        <a href="/utils" className="hover:underline">
+          Utils
         </a>
       </li>
     </>

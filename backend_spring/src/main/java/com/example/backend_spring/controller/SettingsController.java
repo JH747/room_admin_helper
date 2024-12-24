@@ -30,7 +30,12 @@ public class SettingsController {
         // create, update, delete
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        settingsService.setPlatformsAuthInfo(platformsAuthInfoDTO, username);
+        try{
+            settingsService.setPlatformsAuthInfo(platformsAuthInfoDTO, username);
+        } catch (Exception e){
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
         return ResponseEntity.status(HttpStatus.OK).body("PlatformsAuthInfo Setting succeeded");
     }
     @GetMapping("/platformsAuthInfo")

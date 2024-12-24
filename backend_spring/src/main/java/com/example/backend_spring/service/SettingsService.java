@@ -36,7 +36,7 @@ public class SettingsService {
         this.platformsRoomsInfoRepository = platformsRoomsInfoRepository;
     }
 
-    public void setPlatformsAuthInfo(PlatformsAuthInfoDTO platformsAuthInfoDTO, String username) {
+    public void setPlatformsAuthInfo(PlatformsAuthInfoDTO platformsAuthInfoDTO, String username) throws Exception{
         AppUser appUser = appUserRepository.findByUsername(username);
         PlatformsAuthInfo authInfo = platformsAuthInfoRepository.findByAppUser(appUser);
         if(authInfo != null){
@@ -49,15 +49,28 @@ public class SettingsService {
         authInfo.setYapenPass(platformsAuthInfoDTO.getYapenPass());
         authInfo.setYogeiId(platformsAuthInfoDTO.getYogeiId());
         authInfo.setYogeiPass(platformsAuthInfoDTO.getYogeiPass());
-        platformsAuthInfoRepository.save(authInfo);
+        try{
+            platformsAuthInfoRepository.save(authInfo);
+        } catch (Exception e){
+            throw e; // -refactor
+        }
+
     }
     public PlatformsAuthInfoDTO getPlatformsAuthInfo(String username) {
         AppUser appUser = appUserRepository.findByUsername(username);
         PlatformsAuthInfo pai = platformsAuthInfoRepository.findByAppUser(appUser);
-        PlatformsAuthInfoDTO paiDTO = new PlatformsAuthInfoDTO();
         // supports yapen, yogei only by now
-        paiDTO.setYapenId(pai.getYapenId());
-        paiDTO.setYogeiId(pai.getYogeiId());
+        PlatformsAuthInfoDTO paiDTO = new PlatformsAuthInfoDTO();
+        if(pai == null){
+            paiDTO.setYapenId("");
+            paiDTO.setYogeiId("");
+        }
+        else{
+            paiDTO.setYapenId(pai.getYapenId());
+            paiDTO.setYogeiId(pai.getYogeiId());
+        }
+        paiDTO.setYapenPass("");
+        paiDTO.setYogeiPass("");
         return paiDTO;
     }
 

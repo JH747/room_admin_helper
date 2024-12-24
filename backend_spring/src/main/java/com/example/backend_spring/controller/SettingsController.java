@@ -47,8 +47,13 @@ public class SettingsController {
                                                        @RequestParam(defaultValue = "false") boolean delete){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        if(delete) settingsService.deleteStandardRoomsInfo(standardRoomsInfoDTO, username);
-        else settingsService.createStandardRoomsInfo(standardRoomsInfoDTO, username);
+        try{
+            if(delete) settingsService.deleteStandardRoomsInfo(standardRoomsInfoDTO, username);
+            else settingsService.createStandardRoomsInfo(standardRoomsInfoDTO, username);
+        } catch (Exception e){
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
         return ResponseEntity.status(HttpStatus.OK).body("StandardRoomsInfo Setting succeeded");
     }
     @GetMapping("/standardRoomsInfo")
@@ -65,8 +70,14 @@ public class SettingsController {
                                                         @RequestParam(defaultValue = "false") boolean delete){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        if(delete) settingsService.deletePlatformsRoomsInfo(platformsRoomsInfoDTO, username);
-        else settingsService.createPlatformsRoomsInfo(platformsRoomsInfoDTO, username);
+        try{
+            // check if corresponding standard room does not exist or wrong display order given
+            if(delete) settingsService.deletePlatformsRoomsInfo(platformsRoomsInfoDTO, username);
+            else settingsService.createPlatformsRoomsInfo(platformsRoomsInfoDTO, username);
+        } catch(Exception e){
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
         return ResponseEntity.status(HttpStatus.OK).body("PlatformsRoomsInfo Setting succeeded");
     }
     @GetMapping("/platformsRoomsInfo")

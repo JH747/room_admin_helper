@@ -10,7 +10,7 @@ import lombok.Setter;
 public class PlatformsRoomsInfoDTO {
 
     @NotBlank
-    private String stadardRoomName;
+    private String standardRoomName;
     @NotBlank
     private String yapenRoomName;
     @NotBlank

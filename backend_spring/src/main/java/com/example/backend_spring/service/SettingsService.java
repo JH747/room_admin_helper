@@ -13,6 +13,8 @@ import com.example.backend_spring.repository.PlatformsRoomsInfoRepository;
 import com.example.backend_spring.repository.StandardRoomsInfoRepository;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,19 +61,24 @@ public class SettingsService {
         return paiDTO;
     }
 
-    public void createStandardRoomsInfo(StandardRoomsInfoDTO standardRoomsInfoDTO, String username) {
+    public void createStandardRoomsInfo(StandardRoomsInfoDTO standardRoomsInfoDTO, String username) throws Exception {
         AppUser appUser = appUserRepository.findByUsername(username);
         StandardRoomsInfo sri = new StandardRoomsInfo();
         sri.setAppUser(appUser);
         sri.setRoomName(standardRoomsInfoDTO.getRoomName());
         sri.setRoomQuantity(standardRoomsInfoDTO.getRoomQuantity());
         sri.setDisplayOrder(standardRoomsInfoDTO.getDisplayOrder());
-        standardRoomsInfoRepository.save(sri);
+        try {
+            standardRoomsInfoRepository.save(sri);
+        } catch (Exception e) {
+            throw e; // - refactor
+        }
     }
-    public void deleteStandardRoomsInfo(StandardRoomsInfoDTO standardRoomsInfoDTO, String username) {
+    public void deleteStandardRoomsInfo(StandardRoomsInfoDTO standardRoomsInfoDTO, String username) throws Exception {
         AppUser appUser = appUserRepository.findByUsername(username);
         StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(standardRoomsInfoDTO.getRoomName(), appUser);
         if(sri != null) standardRoomsInfoRepository.delete(sri);
+        else throw new Exception("Corresponding standard room does not exist");
     }
     public List<StandardRoomsInfoDTO> getStandardRoomsInfo(String username) {
         AppUser appUser = appUserRepository.findByUsername(username);
@@ -88,22 +95,33 @@ public class SettingsService {
     }
 
 
-    public void createPlatformsRoomsInfo(PlatformsRoomsInfoDTO platformsRoomsInfoDTO, String username) {
+    public void createPlatformsRoomsInfo(PlatformsRoomsInfoDTO platformsRoomsInfoDTO, String username) throws Exception{
         AppUser appUser = appUserRepository.findByUsername(username);
-        StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(platformsRoomsInfoDTO.getStadardRoomName(), appUser);
+        StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(platformsRoomsInfoDTO.getStandardRoomName(), appUser);
+        if(sri == null){
+            throw new Exception("Corresponding standard room does not exist");
+        }
         PlatformsRoomsInfo pri = new PlatformsRoomsInfo();
         pri.setAppUser(appUser);
         pri.setStandardRoomsInfo(sri);
         pri.setYapenRoomName(platformsRoomsInfoDTO.getYapenRoomName());
         pri.setYogeiRoomName(platformsRoomsInfoDTO.getYogeiRoomName());
         pri.setDisplayOrder(platformsRoomsInfoDTO.getDisplayOrder());
-        platformsRoomsInfoRepository.save(pri);
+        try{
+            platformsRoomsInfoRepository.save(pri);
+        } catch (Exception e) {
+            throw e; // - refactor
+        }
     }
-    public void deletePlatformsRoomsInfo(PlatformsRoomsInfoDTO platformsRoomsInfoDTO, String username) {
+    public void deletePlatformsRoomsInfo(PlatformsRoomsInfoDTO platformsRoomsInfoDTO, String username) throws Exception{
         AppUser appUser = appUserRepository.findByUsername(username);
-        StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(platformsRoomsInfoDTO.getStadardRoomName(), appUser);
+        StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(platformsRoomsInfoDTO.getStandardRoomName(), appUser);
+        if(sri == null){
+            throw new Exception("Corresponding standard room does not exist");
+        }
         PlatformsRoomsInfo pri = platformsRoomsInfoRepository.findByStandardRoomsInfoAndAppUser(sri, appUser);
         if(pri != null) platformsRoomsInfoRepository.delete(pri);
+        else throw new Exception("Corresponding platform room does not exist");
     }
     public List<PlatformsRoomsInfoDTO> getPlatformsRoomsInfo(String username) {
         AppUser appUser = appUserRepository.findByUsername(username);
@@ -111,10 +129,11 @@ public class SettingsService {
         List<PlatformsRoomsInfoDTO> priDTOs = new ArrayList<>();
         for(PlatformsRoomsInfo pri : pris){
             PlatformsRoomsInfoDTO priDTO = new PlatformsRoomsInfoDTO();
-            priDTO.setStadardRoomName(pri.getStandardRoomsInfo().getRoomName());
+            priDTO.setStandardRoomName(pri.getStandardRoomsInfo().getRoomName());
             priDTO.setYapenRoomName(pri.getYapenRoomName());
             priDTO.setYogeiRoomName(pri.getYogeiRoomName());
             priDTO.setDisplayOrder(pri.getDisplayOrder());
+            priDTOs.add(priDTO);
         }
         return priDTOs;
     }

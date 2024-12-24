@@ -73,7 +73,6 @@ export default function Page() {
           }),
         }
       );
-      console.log(addRes);
       if (!addRes.ok) {
         alert('Failed to add room. Check if display order is unique.');
       }

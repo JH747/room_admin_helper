@@ -92,25 +92,36 @@ export default function Page() {
       {/* <p>{JSON.stringify(supplies)}</p> */}
       <h1 className="text-2xl font-bold mb-4">Supply Management</h1>
       <div className="space-y-4">
-        {supplies.map((supply, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between border p-2 rounded"
-          >
-            <div>
-              <p className="font-medium">Supply Name: {supply.name}</p>
-              <p>Desired Quantity: {supply.desiredQuantity}</p>
-              <p>Threshold Quantity: {supply.thresholdQuantity}</p>
-              <p>Current Quantity: {supply.currentQuantity}</p>
-            </div>
-            <button
-              onClick={() => handleDelete(supply)}
-              className="bg-red-500 text-white px-4 py-2 rounded"
+        {supplies.map((supply, index) => {
+          // Determine border color based on conditions
+          let borderColor = 'border-red-500'; // Default to red
+
+          if (supply.currentQuantity >= supply.desiredQuantity) {
+            borderColor = 'border-green-500'; // Green if current >= desired
+          } else if (supply.currentQuantity >= supply.thresholdQuantity) {
+            borderColor = 'border-yellow-500'; // Yellow if current >= threshold
+          }
+
+          return (
+            <div
+              key={index}
+              className={`flex items-center justify-between border-4 ${borderColor} p-2 rounded`}
             >
-              Delete
-            </button>
-          </div>
-        ))}
+              <div>
+                <p className="font-medium">Supply Name: {supply.name}</p>
+                <p>Desired Quantity: {supply.desiredQuantity}</p>
+                <p>Threshold Quantity: {supply.thresholdQuantity}</p>
+                <p>Current Quantity: {supply.currentQuantity}</p>
+              </div>
+              <button
+                onClick={() => handleDelete(supply)}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Delete
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* 새로운 룸 생성 */}

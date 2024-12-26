@@ -10,7 +10,7 @@ import lombok.Setter;
 public class SupplyConsumptionDTO {
 
     @NotBlank
-    private String standardRoomsName;
+    private String standardRoomName;
 
     @NotBlank
     private String supplyName;

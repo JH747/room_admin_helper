@@ -65,17 +65,18 @@ public class SupplyService {
 
     public void createSupplyConsumption(SupplyConsumptionDTO supplyConsumptionDTO, String username){
         AppUser appUser = appUserRepository.findByUsername(username);
-        StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(supplyConsumptionDTO.getStandardRoomsName(), appUser);
+        StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(supplyConsumptionDTO.getStandardRoomName(), appUser);
         Supply supply = supplyRepository.findByNameAndAppUser(supplyConsumptionDTO.getSupplyName(), appUser);
         SupplyConsumption supplyConsumption = new SupplyConsumption();
         supplyConsumption.setAppUser(appUser);
         supplyConsumption.setStandardRoomsInfo(sri);
         supplyConsumption.setSupply(supply);
+        supplyConsumption.setConsumption(supplyConsumptionDTO.getConsumption());
         supplyConsumptionRepository.save(supplyConsumption);
     }
     public void deleteSupplyConsumption(SupplyConsumptionDTO supplyConsumptionDTO, String username){
         AppUser appUser = appUserRepository.findByUsername(username);
-        StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(supplyConsumptionDTO.getStandardRoomsName(), appUser);
+        StandardRoomsInfo sri = standardRoomsInfoRepository.findByRoomNameAndAppUser(supplyConsumptionDTO.getStandardRoomName(), appUser);
         Supply supply = supplyRepository.findByNameAndAppUser(supplyConsumptionDTO.getSupplyName(), appUser);
         SupplyConsumption supplyConsumption = supplyConsumptionRepository.findByStandardRoomsInfoAndSupplyAndAppUser(sri, supply, appUser);
         if(supplyConsumption != null){
@@ -88,8 +89,9 @@ public class SupplyService {
         List<SupplyConsumptionDTO> supplyConsumptionDTOs = new ArrayList<>();
         for(SupplyConsumption supplyConsumption : supplyConsumptions){
             SupplyConsumptionDTO supplyConsumptionDTO = new SupplyConsumptionDTO();
-            supplyConsumptionDTO.setStandardRoomsName(supplyConsumption.getStandardRoomsInfo().getRoomName());
+            supplyConsumptionDTO.setStandardRoomName(supplyConsumption.getStandardRoomsInfo().getRoomName());
             supplyConsumptionDTO.setSupplyName(supplyConsumption.getSupply().getName());
+            supplyConsumptionDTO.setConsumption(supplyConsumption.getConsumption());
             supplyConsumptionDTOs.add(supplyConsumptionDTO);
         }
         return supplyConsumptionDTOs;

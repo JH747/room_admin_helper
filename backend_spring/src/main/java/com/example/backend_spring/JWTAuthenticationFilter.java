@@ -1,6 +1,5 @@
 package com.example.backend_spring;
 
-import com.example.backend_spring.service.UserSecurityService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

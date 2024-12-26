@@ -61,6 +61,7 @@ public class AuthController {
     @PostMapping("/signin")
     public ResponseEntity<String> signin(@RequestBody AppUserDTO appUserDTO){
         try{
+            // SecurtyConfig의 authenticationManager가 authenticationProvider 목록 중 인증 처리 조건에 맞는 놈을 찾아 인증을 위임
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(appUserDTO.getId(), appUserDTO.getPass()));
             UserDetails userDetails = userDetailsService.loadUserByUsername(appUserDTO.getId());
             String token = jwtUtil.generateToken(userDetails.getUsername());

@@ -1,6 +1,7 @@
 package com.example.backend_spring.controller;
 
 
+import com.example.backend_spring.service.AsyncService;
 import com.example.backend_spring.service.TransferRequestService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +27,11 @@ import java.util.concurrent.*;
 public class AnalysisController {
 
     private final TransferRequestService transferRequestService;
+    private final AsyncService asyncService;
 
-    public AnalysisController(TransferRequestService transferRequestService) {
+    public AnalysisController(TransferRequestService transferRequestService, AsyncService asyncService) {
         this.transferRequestService = transferRequestService;
+        this.asyncService = asyncService;
     }
 
     // TODO:  consider replacing below with combination of multiple async functions
@@ -50,67 +53,54 @@ public class AnalysisController {
 
         // set sseEmitter
         SseEmitter emitter = new SseEmitter(5 * 60 * 1000L); // 5 min timeout
-        emitter.onCompletion(() -> log.info("SSE 연결 종료")); // TODO: replace with logging
+        emitter.onCompletion(() -> log.info("SSE 연결 종료"));
         emitter.onTimeout(() -> log.info("SSE 연결 타임아웃"));
         emitter.onError((e) -> log.error("SSE 연결 중 에러 발생: {}", e.getMessage()));
+
         Map<String, String> init = new HashMap<>();
         init.put("status", "Connection opened");
         try{
             emitter.send(init);
         }catch (IOException e){
             emitter.completeWithError(e);
+            log.error(e.getMessage());
         }
 
-        // scheduled ping sending on child thread to maintain connection with client
-        Map<String, String> ping = new HashMap<>();
-        ping.put("status", "Ping");
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        Runnable task = () -> {
-            try{
-//                if(future.isDone()) executorService.shutdown();
-                log.info("{}\t{}\t{}", Thread.currentThread().getName(), SecurityContextHolder.getContext().getAuthentication().getName(), response.isCommitted());
-                emitter.send(ping);
-            }catch (Exception e){
-                emitter.completeWithError(e);
-            }
-        };
-        Runnable task_with_securityContext = new DelegatingSecurityContextRunnable(task); // not this problem
-        executorService.scheduleAtFixedRate(task_with_securityContext, 5, 5, TimeUnit.SECONDS);
-
-        // get response from analysis server on child thread
-        ExecutorService executorService2 = Executors.newSingleThreadExecutor();
-        Runnable task2 = () -> {
-//            String s = longFunction();
-            ResponseEntity<String> obj = transferRequestService.transferRequest(target_url, HttpMethod.GET, null);
-            log.info(obj.getBody());
-            executorService.shutdown();
-            log.info("{}\t{}\t{}", Thread.currentThread().getName(), SecurityContextHolder.getContext().getAuthentication().getName(), response.isCommitted());
-            try {
-                emitter.send(obj.getBody());
-                emitter.complete();
-            } catch (IOException e) {
-                emitter.completeWithError(e);
-            }
-        };
-        Runnable task2_with_securityContext = new DelegatingSecurityContextRunnable(task2);
-        executorService2.submit(task2_with_securityContext);
-
-//        CompletableFuture<Void> future = CompletableFuture.supplyAsync(()->{
-//            return longFunction();
-////            return transferRequestService.transferRequest(target_url, HttpMethod.GET, null);
-//        }).thenAccept(response->{
+//        // scheduled ping sending on child thread to maintain connection with client
+//        Map<String, String> ping = new HashMap<>();
+//        ping.put("status", "Ping");
+//        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+//        Runnable task = () -> {
+//            try{
+//                log.info("{}\t{}\t{}", Thread.currentThread().getName(), SecurityContextHolder.getContext().getAuthentication().getName(), response.isCommitted());
+//                emitter.send(ping);
+//            }catch (Exception e){
+//                emitter.completeWithError(e);
+//            }
+//        };
+//        Runnable task_with_securityContext = new DelegatingSecurityContextRunnable(task); // not this problem
+//        executorService.scheduleAtFixedRate(task_with_securityContext, 5, 5, TimeUnit.SECONDS);
+//
+//        // get response from analysis server on child thread
+//        ExecutorService executorService2 = Executors.newSingleThreadExecutor();
+//        Runnable task2 = () -> {
+//            ResponseEntity<String> obj = transferRequestService.transferRequest(target_url, HttpMethod.GET, null);
+//            log.info(obj.getBody());
+//            executorService.shutdown();
+//            log.info("{}\t{}\t{}", Thread.currentThread().getName(), SecurityContextHolder.getContext().getAuthentication().getName(), response.isCommitted());
 //            try {
-//                executorService.shutdown();
-//                emitter.send(response);
+//                emitter.send(obj.getBody());
 //                emitter.complete();
 //            } catch (IOException e) {
 //                emitter.completeWithError(e);
 //            }
-//        }).exceptionally(e->{
-//            emitter.completeWithError(e);
-//            return null;
-//        });
+//        };
+//        Runnable task2_with_securityContext = new DelegatingSecurityContextRunnable(task2);
+//        executorService2.submit(task2_with_securityContext);
 
+//        asyncService.frontConnectionMaintainer(emitter);
+//        asyncService.analyzeServerConnector(emitter, target_url);
+//        emitter.complete();
         return emitter;
     }
 

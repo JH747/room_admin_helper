@@ -3,6 +3,7 @@ package com.example.backend_spring;
 import com.example.backend_spring.dto.*;
 import com.example.backend_spring.entity.AppUser;
 import com.example.backend_spring.entity.Supply;
+import com.example.backend_spring.entity.SupplyConsumption;
 import com.example.backend_spring.repository.SupplyRepository;
 import com.example.backend_spring.service.AppUserService;
 import com.example.backend_spring.service.SettingsService;
@@ -18,6 +19,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.transaction.AfterTransaction;
 import org.springframework.test.context.transaction.TestTransaction;
 
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -73,7 +76,7 @@ public class SettingsControllerTest {
         platformsRoomsInfoDTO_t.setYogeiRoomName("test_yogei_room_name");
         platformsRoomsInfoDTO_t.setDisplayOrder(1);
         try{
-            settingsService.createPlatformsRoomsInfo(platformsRoomsInfoDTO_t, "test_user_name");
+            settingsService.createPlatformsRoomsInfo(platformsRoomsInfoDTO_t, "test_username");
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -87,7 +90,7 @@ public class SettingsControllerTest {
 
         supplyConsumptionDTO_t = new SupplyConsumptionDTO();
         supplyConsumptionDTO_t.setSupplyName("test_supply");
-        supplyConsumptionDTO_t.setStandardRoomName("test_standard_room");
+        supplyConsumptionDTO_t.setStandardRoomName("test_standard_room_name");
         supplyConsumptionDTO_t.setConsumption(10);
         supplyService.createSupplyConsumption(supplyConsumptionDTO_t, "test_username");
 
@@ -190,10 +193,9 @@ public class SettingsControllerTest {
                 request,
                 SupplyConsumptionDTO[].class
         );
-
         SupplyConsumptionDTO[] resp = response.getBody();
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(resp[0].getStandardRoomName(), "test_standard_room");
+        assertEquals(resp[0].getStandardRoomName(), "test_standard_room_name");
     }
 
     @Test

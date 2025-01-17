@@ -36,25 +36,23 @@ public class SettingsService {
         this.platformsRoomsInfoRepository = platformsRoomsInfoRepository;
     }
 
-    public void setPlatformsAuthInfo(PlatformsAuthInfoDTO platformsAuthInfoDTO, String username) throws Exception{
+    public void setPlatformsAuthInfo(PlatformsAuthInfoDTO platformsAuthInfoDTO, String username) {
         AppUser appUser = appUserRepository.findByUsername(username);
         PlatformsAuthInfo authInfo = platformsAuthInfoRepository.findByAppUser(appUser);
-        if(authInfo != null){
-            platformsAuthInfoRepository.delete(authInfo);
+        boolean flag = false;
+        if(authInfo == null){
+            flag = true;
+            authInfo = new PlatformsAuthInfo();
         }
-        authInfo = new PlatformsAuthInfo();
         // supports yapen, yogei only by now
         authInfo.setAppUser(appUser);
         authInfo.setYapenId(platformsAuthInfoDTO.getYapenId());
         authInfo.setYapenPass(platformsAuthInfoDTO.getYapenPass());
         authInfo.setYogeiId(platformsAuthInfoDTO.getYogeiId());
         authInfo.setYogeiPass(platformsAuthInfoDTO.getYogeiPass());
-        try{
+        if(flag){
             platformsAuthInfoRepository.save(authInfo);
-        } catch (Exception e){
-            throw e; // -refactor
         }
-
     }
     public PlatformsAuthInfoDTO getPlatformsAuthInfo(String username) {
         AppUser appUser = appUserRepository.findByUsername(username);
@@ -74,7 +72,7 @@ public class SettingsService {
         return paiDTO;
     }
 
-    public void createStandardRoomsInfo(StandardRoomsInfoDTO standardRoomsInfoDTO, String username) throws Exception {
+    public void createStandardRoomsInfo(StandardRoomsInfoDTO standardRoomsInfoDTO, String username){
         AppUser appUser = appUserRepository.findByUsername(username);
         StandardRoomsInfo sri = new StandardRoomsInfo();
         sri.setAppUser(appUser);
@@ -84,7 +82,7 @@ public class SettingsService {
         try {
             standardRoomsInfoRepository.save(sri);
         } catch (Exception e) {
-            throw e; // - refactor
+            // - refactor
         }
     }
     public void deleteStandardRoomsInfo(StandardRoomsInfoDTO standardRoomsInfoDTO, String username) throws Exception {

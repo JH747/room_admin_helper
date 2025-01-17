@@ -114,7 +114,7 @@ public class AnalysisController {
 
     @MessageMapping("/analysis")
     @SendTo("/queue/general")
-    public ResponseEntity getAnalysis(Map<String, Object> obj, SimpMessageHeaderAccessor headerAccessor){
+    public String getAnalysis(Map<String, Object> obj, SimpMessageHeaderAccessor headerAccessor){
         String start_date = obj.get("start_date").toString();
         String end_date = obj.get("end_date").toString();
         String mode = obj.get("mode").toString();
@@ -139,9 +139,9 @@ public class AnalysisController {
 
         String target_url = String.format("http://localhost:8000/api/processes/?username=%s&start_date=%s&end_date=%s&mode=%s",
         username, start_date, end_date, mode);
-        ResponseEntity<String> res = transferRequestService.transferRequest(target_url, HttpMethod.GET, null);
+        ResponseEntity res = transferRequestService.transferRequest(target_url, HttpMethod.GET, null);
 
-        return ResponseEntity.status(HttpStatus.OK).body(res);
+        return res.getBody().toString();
         // 반환값 재작성
     }
 

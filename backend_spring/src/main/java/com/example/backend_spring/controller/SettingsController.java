@@ -112,7 +112,7 @@ public class SettingsController {
     }
 
 
-    @PostMapping("supplyConsumption")
+    @PostMapping("/supplyConsumption")
     public ResponseEntity<String> setSupplyConsumption(@RequestBody SupplyConsumptionDTO supplyConsumptionDTO,
                                                        @RequestParam(defaultValue = "false") boolean delete){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -121,7 +121,7 @@ public class SettingsController {
         else supplyService.createSupplyConsumption(supplyConsumptionDTO, username);
         return ResponseEntity.status(HttpStatus.OK).body("SupplyConsumption Setting succeeded");
     }
-    @GetMapping("supplyConsumption")
+    @GetMapping("/supplyConsumption")
     public ResponseEntity<List<SupplyConsumptionDTO>> getSupplyConsumption(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();

@@ -59,6 +59,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/ws/**").permitAll() // will be done at interceptor
                         .requestMatchers("/test/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")  // /admin 경로는 ROLE_ADMIN만 접근 가능

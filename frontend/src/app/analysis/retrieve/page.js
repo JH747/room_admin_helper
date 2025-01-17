@@ -14,7 +14,7 @@ import { useEffect } from 'react';
 export default function Page() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [data, setData] = useState(null);
+  const [data, setData] = useState({});
   const [isChartVisible, setIsChartVisible] = useState(false); // 차트 표시 여부
   const [client, setClient] = useState(null);
 

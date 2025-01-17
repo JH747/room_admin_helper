@@ -6,50 +6,111 @@ import { EventSourcePolyfill } from 'event-source-polyfill';
 import 'react-datepicker/dist/react-datepicker.css';
 import DatePicker from 'react-datepicker';
 import dayjs from 'dayjs';
+import { Client } from '@stomp/stompjs';
+import { useEffect } from 'react';
 
 export default function Page() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [data, setData] = useState(null);
+  const [data, setData] = useState({});
   const [isDataVisible, setIsDataVisible] = useState(false);
+  const [client, setClient] = useState(null);
+
+  useEffect(() => {
+    const connectWebSocket = async () => {
+      try {
+        const session = await getSession(); // 세션 비동기 호출
+        if (!session || !session.token) {
+          console.error('Session or token is missing.');
+          return;
+        }
+
+        const stompClient = new Client({
+          brokerURL: 'ws://localhost:8080/ws',
+          connectHeaders: {
+            Authorization: `Bearer ${session.token}`, // 토큰 추가
+          },
+          debug: function (str) {
+            console.log(str);
+          },
+          reconnectDelay: 5000,
+          heartbeatIncoming: 4000,
+          heartbeatOutgoing: 4000,
+        });
+
+        stompClient.onConnect = function (frame) {
+          console.log('Connected: ' + frame);
+          stompClient.subscribe('/queue/general', function (message) {
+            console.log('From Server: ' + message.body);
+            const data = JSON.parse(message.body);
+            setData(data);
+            if (data.message) {
+              setIsDataVisible(false);
+            } else {
+              setIsDataVisible(true);
+            }
+          });
+        };
+
+        stompClient.activate();
+        setClient(stompClient);
+      } catch (error) {
+        console.error('Error connecting to WebSocket:', error);
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (client) {
+        client.deactivate(); // 컴포넌트 언마운트 시 WebSocket 연결 해제
+      }
+    };
+  }, []);
 
   async function handleSubmit() {
     const sDate = dayjs(startDate).format('YYYY-MM-DD');
     const eDate = dayjs(endDate).format('YYYY-MM-DD');
-    const session = await getSession();
 
-    const EventSource = EventSourcePolyfill;
-
-    // console.log(session.token);
-
-    const eventSource = new EventSource(
-      `/api/proxy_retrieve_info?start_date=${sDate}&end_date=${eDate}&mode=detect`,
-      {
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
-      }
-    );
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.status == 'Ping') {
-          console.log('Ping received');
-        } else if (data.status == 'Connection opened') {
-          console.log('Connection opened');
-        } else {
-          setData(data);
-          setIsDataVisible(true);
-          eventSource.close();
-        }
-      } catch (error) {
-        console.error('JSON parsing error:', error);
-      }
-    };
-    eventSource.onerror = (error) => {
-      console.error('SSE error:', error);
-      eventSource.close();
-    };
+    if (client) {
+      client.publish({
+        destination: '/app/analysis',
+        body: JSON.stringify({
+          start_date: sDate,
+          end_date: eDate,
+          mode: 'detect',
+        }),
+      });
+    }
+    // const EventSource = EventSourcePolyfill;
+    // const eventSource = new EventSource(
+    //   `/api/proxy_retrieve_info?start_date=${sDate}&end_date=${eDate}&mode=detect`,
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${session.token}`,
+    //     },
+    //   }
+    // );
+    // eventSource.onmessage = (event) => {
+    //   try {
+    //     const data = JSON.parse(event.data);
+    //     if (data.status == 'Ping') {
+    //       console.log('Ping received');
+    //     } else if (data.status == 'Connection opened') {
+    //       console.log('Connection opened');
+    //     } else {
+    //       setData(data);
+    //       setIsDataVisible(true);
+    //       eventSource.close();
+    //     }
+    //   } catch (error) {
+    //     console.error('JSON parsing error:', error);
+    //   }
+    // };
+    // eventSource.onerror = (error) => {
+    //   console.error('SSE error:', error);
+    //   eventSource.close();
+    // };
   }
 
   return (
@@ -104,6 +165,7 @@ export default function Page() {
             ))}
           </div>
         )}
+        {!isDataVisible && <p>{data.message}</p>}
       </div>
     </div>
   );

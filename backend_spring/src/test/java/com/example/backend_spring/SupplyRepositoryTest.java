@@ -39,31 +39,33 @@ public class SupplyRepositoryTest {
     public void testFindByNameAndAppUser(){
         // given
         AppUser testUser = appUserRepository.findByUsername("test_user");
-        Supply supply = new Supply();
-        supply.setName("test_supply");
-        supply.setAppUser(testUser);
+        Supply expectedSupply = new Supply();
+        expectedSupply.setName("test_supply");
+        expectedSupply.setAppUser(testUser);
+        supplyRepository.save(expectedSupply);
         // when
-        supplyRepository.save(supply);
+        Supply givenSupply = supplyRepository.findByNameAndAppUser("test_supply", testUser);
         // then
-        assertEquals(supply, supplyRepository.findByNameAndAppUser("test_supply", testUser));
+        assertEquals(expectedSupply, givenSupply);
     }
 
     @Test
     public void testFindByAppUser(){
         // given
         AppUser testUser = appUserRepository.findByUsername("test_user");
-        List<Supply> supplies = new ArrayList<>();
+        List<Supply> expectedSupplies = new ArrayList<>();
         Supply supply = new Supply();
         supply.setName("test_supply1");
         supply.setAppUser(testUser);
-        supplies.add(supply);
+        expectedSupplies.add(supply);
         supply = new Supply();
         supply.setName("test_supply2");
         supply.setAppUser(testUser);
-        supplies.add(supply);
+        expectedSupplies.add(supply);
+        supplyRepository.saveAll(expectedSupplies);
         // when
-        supplyRepository.saveAll(supplies);
+        List<Supply> givenSupplies = supplyRepository.findByAppUser(testUser);
         // then
-        assertEquals(supplies, supplyRepository.findByAppUser(testUser));
+        assertEquals(expectedSupplies, givenSupplies);
     }
 }

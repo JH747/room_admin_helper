@@ -16,6 +16,8 @@ export default function SignupPage() {
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [error, setError] = useState(null);
 
+  const addr = process.env.NEXT_PUBLIC_BE_ADDR;
+
   const startTimer = () => {
     let seconds = 300; // 5 minutes
     setTimer(seconds);
@@ -43,7 +45,7 @@ export default function SignupPage() {
     startTimer();
 
     // Send code to email API request
-    await fetch('http://127.0.0.1:8080/auth/sendcode', {
+    await fetch(`${addr}/auth/sendcode`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email }),
@@ -56,7 +58,7 @@ export default function SignupPage() {
       return;
     }
 
-    const response = await fetch('http://127.0.0.1:8080/auth/signup', {
+    const response = await fetch(`${addr}/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -67,8 +69,8 @@ export default function SignupPage() {
       }),
     });
 
-    const data = await response.json();
-    if (data.message === 'signup success') {
+    // const data = await response.json();
+    if (response.status === 201) {
       router.push('/');
     } else {
       setError('Signup failed. Please check the information and try again.');

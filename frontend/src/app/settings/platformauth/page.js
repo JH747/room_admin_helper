@@ -12,19 +12,18 @@ export default function Page() {
     yogeiPass: '',
   });
 
+  const addr = process.env.NEXT_PUBLIC_BE_ADDR;
+
   async function fetchData() {
     const session = await getSession();
     if (!session) {
       router.push('/errorpages/403');
     }
-    const res = await fetch(
-      'http://127.0.0.1:8080/settings/platformsAuthInfo',
-      {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${session.token}` },
-        withCredentials: true,
-      }
-    );
+    const res = await fetch(`${addr}/settings/platformsAuthInfo`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${session.token}` },
+      withCredentials: true,
+    });
     const data = await res.json();
     setAuthInfo(data);
   }
@@ -41,22 +40,19 @@ export default function Page() {
       authInfo.yogeiPass
     ) {
       const session = await getSession();
-      const setRes = await fetch(
-        'http://127.0.0.1:8080/settings/platformsAuthInfo',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.token}`,
-          },
-          body: JSON.stringify({
-            yapenId: authInfo.yapenId,
-            yapenPass: authInfo.yapenPass,
-            yogeiId: authInfo.yogeiId,
-            yogeiPass: authInfo.yogeiPass,
-          }),
-        }
-      );
+      const setRes = await fetch(`${addr}/settings/platformsAuthInfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({
+          yapenId: authInfo.yapenId,
+          yapenPass: authInfo.yapenPass,
+          yogeiId: authInfo.yogeiId,
+          yogeiPass: authInfo.yogeiPass,
+        }),
+      });
       if (!setRes.ok) {
         alert('Failed to set platform auth information.');
       }

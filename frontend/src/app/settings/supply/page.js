@@ -12,13 +12,14 @@ export default function Page() {
     thresholdQuantity: '',
     currentQuantity: '',
   });
+  const addr = process.env.NEXT_PUBLIC_BE_ADDR;
 
   async function fetchData() {
     const session = await getSession();
     if (!session) {
       router.push('/errorpages/403');
     }
-    const res1 = await fetch('http://127.0.0.1:8080/settings/supply', {
+    const res1 = await fetch(`${addr}/settings/supply`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${session.token}` },
       withCredentials: true,
@@ -35,7 +36,7 @@ export default function Page() {
     const session = await getSession();
     console.log(supply);
     console.log(session.token);
-    await fetch('http://127.0.0.1:8080/settings/supply?delete=true', {
+    await fetch(`${addr}/settings/supply?delete=true`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ export default function Page() {
       newSupply.currentQuantity
     ) {
       const session = await getSession();
-      const addRes = await fetch('http://127.0.0.1:8080/settings/supply', {
+      const addRes = await fetch(`{$addr}/settings/supply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

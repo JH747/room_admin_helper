@@ -13,7 +13,8 @@ const authOptions = {
       async authorize(credentials) {
         // 백엔드로 인증 요청 보내기
         try {
-          const res = await fetch('http://127.0.0.1:8080/auth/signin', {
+          const addr = process.env.NEXT_PUBLIC_BE_ADDR;
+          const res = await fetch(`${addr}/auth/signin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

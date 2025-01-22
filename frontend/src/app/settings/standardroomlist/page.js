@@ -11,20 +11,18 @@ export default function Page() {
     roomQuantity: '',
     displayOrder: '',
   });
+  const addr = process.env.NEXT_PUBLIC_BE_ADDR;
 
   async function fetchData() {
     const session = await getSession();
     if (!session) {
       router.push('/errorpages/403');
     }
-    const res1 = await fetch(
-      'http://127.0.0.1:8080/settings/standardRoomsInfo',
-      {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${session.token}` },
-        withCredentials: true,
-      }
-    );
+    const res1 = await fetch(`${addr}/settings/standardRoomsInfo`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${session.token}` },
+      withCredentials: true,
+    });
     const data = await res1.json();
     setRooms(data);
   }
@@ -37,42 +35,36 @@ export default function Page() {
     const session = await getSession();
     console.log(room);
     console.log(session.token);
-    await fetch(
-      'http://127.0.0.1:8080/settings/standardRoomsInfo?delete=true',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({
-          roomName: room.roomName,
-          roomQuantity: room.roomQuantity,
-          displayOrder: room.displayOrder,
-        }),
-      }
-    );
+    await fetch(`${addr}/settings/standardRoomsInfo?delete=true`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({
+        roomName: room.roomName,
+        roomQuantity: room.roomQuantity,
+        displayOrder: room.displayOrder,
+      }),
+    });
     fetchData();
   }
 
   async function handleAddRoom() {
     if (newRoom.roomName && newRoom.roomQuantity && newRoom.displayOrder) {
       const session = await getSession();
-      const addRes = await fetch(
-        'http://127.0.0.1:8080/settings/standardRoomsInfo',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.token}`,
-          },
-          body: JSON.stringify({
-            roomName: newRoom.roomName,
-            roomQuantity: newRoom.roomQuantity,
-            displayOrder: newRoom.displayOrder,
-          }),
-        }
-      );
+      const addRes = await fetch(`${addr}/settings/standardRoomsInfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({
+          roomName: newRoom.roomName,
+          roomQuantity: newRoom.roomQuantity,
+          displayOrder: newRoom.displayOrder,
+        }),
+      });
       if (!addRes.ok) {
         alert('Failed to add room. Check if display order is unique.');
       }

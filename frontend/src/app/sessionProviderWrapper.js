@@ -1,7 +1,7 @@
 'use client';
 
 import { SessionProvider } from 'next-auth/react';
-import { AuthControl } from './authcontrol';
+import { AuthControl } from './authControl';
 
 export default function SessionProviderWrapper({ children }) {
   return (

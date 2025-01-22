@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+
+  next-fe:
+    image: next-fe-rah
+    container_name: next-fe-rah-cont
+    ports:
+      - "3000:3000"
+    # Next.js는 NEXT_PUBLIC_ 접두사가 없는 환경 변수를 빌드 시점에 로드하려면 .env.production 파일을 프로젝트 루트에 배치해야 함
+    # env_file:
+    #   - .env.production
+    environment:
+      - NODE_ENV=production
+      - NEXTAUTH_SECRET=temp-next-secret-key
+      - NEXT_PUBLIC_BE_ADDR=http://localhost:8080
+    # The browser isn't in a container and can't see the Docker-network host names. 
+    # This also extends to your front-end application; even if its code is served from a container, the actual application runs in the browser, and outside of Docker. 
+    command: ["npm", "run", "start"]
+    networks:
+      - rah-network
+
+  spring-be:
+    image: spring-be-rah
+    container_name: spring-be-rah-cont
+    ports:
+      - "8080:8080"
+    environment:
+      # MYSQL 환경 변수
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/tiger_db
+      - SPRING_DATASOURCE_USERNAME=dev
+      - SPRING_DATASOURCE_PASSWORD=1234
+      # Redis 환경 변수
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DATABASE=0
+      - REDIS_USERNAME=user
+      - REDIS_PASSWORD=secret
+      # JavaMailSender 환경 변수
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=chess010905402@gmail.com
+      - MAIL_PASSWORD=hlksjbxrhnbyeavy
+      - MAIL_SMTP_AUTH=true
+      - MAIL_SMTP_STARTTLS=true
+      # analysis 서버 환경 변수
+      - ANALYSIS_SERVER_ADDR=http://django-be
+    command: ["java", "-jar", "app.jar"]
+    networks:
+      - rah-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+
+  django-be:
+    image: django-be-rah
+    container_name: django-be-rah-cont
+    ports:
+      - "8000:8000"
+    environment:
+      - MYSQL_DATABASE=tiger_db
+      - MYSQL_USER=dev
+      - MYSQL_PASSWORD=1234
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,django-be,myapp.com
+      - DJANGO_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://myapp.com
+
+      - PYTHONUNBUFFERED=1
+      - DJANGO_SETTINGS_MODULE=config.settings
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
+    networks:
+      - rah-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql
+    container_name: mysql-rah-cont
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=tiger_db
+      - MYSQL_USER=dev
+      - MYSQL_PASSWORD=1234
+    networks:
+      - rah-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis:
+    image: redis
+    container_name: redis-rah-cont
+    ports:
+      - "6379:6379"
+    # command: ["redis-server", "--requirepass", "secret"]
+    networks:
+      - rah-network
+    healthcheck:
+      # test: ["CMD", "redis-cli", "-a", "secret", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  rah-network:
+    driver:
+      bridge

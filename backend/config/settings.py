@@ -13,10 +13,14 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 
 from decouple import config
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 혹은 다른 임시 경로
+# python manage.py collectstatic 명령을 실행하면 Django가 자동으로 생성하고, 모든 정적 파일을 이 디렉토리에 복사
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -28,10 +32,11 @@ SECRET_KEY = 'django-insecure-$lekx^$-h^r%x&7jgn6ahf-x2ak%@bl5lk44odokblleqzee*6
 DEBUG = True
 
 ## dev defined set
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1'
-]
+# ALLOWED_HOSTS = [
+#     'localhost',
+#     '127.0.0.1'
+# ]
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 ##
 
 # Application definition
@@ -90,11 +95,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # MySQL 엔진
-        'NAME': 'tiger_db',  # 데이터베이스 이름
-        'USER': 'dev',  # 데이터베이스 사용자
-        'PASSWORD': '1234',  # 사용자 비밀번호
-        'HOST': 'localhost',  # 호스트 주소
-        'PORT': '3306',
+        'NAME': os.environ.get('MYSQL_DATABASE', 'tiger_db'),  # 데이터베이스 이름
+        'USER': os.environ.get('MYSQL_USER', 'dev'),  # 데이터베이스 사용자
+        'PASSWORD': os.environ.get('MYSQL_PASSWORD', '1234'),  # 사용자 비밀번호
+        'HOST': os.environ.get('MYSQL_HOST', 'localhost'),  # 호스트 주소
+        'PORT': os.environ.get('MYSQL_PORT', '3306'),
+        'TEST': {
+            'MIRROR': 'default',  # 실제 데이터베이스를 테스트에 사용
+        },
         #
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': BASE_DIR / 'db.sqlite3',
@@ -153,17 +161,15 @@ REST_FRAMEWORK = {
     ]
 }
 
-SMTP_HOST = 'smtp.gmail.com'
-SMTP_USER = 'chess010905402@gmail.com'
-SMTP_PORT = 587
-SMTP_PASSWORD = config('SMTP_PASSWORD')
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+#     "http://localhost:8080",
+#     "http://127.0.0.1:8080",
+# ]
+CORS_ALLOWED_ORIGINS = os.getenv("DJANGO_CORS_ALLOWED_ORIGINS",
+                                 "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080").split(",")
 CORS_ALLOW_HEADERS = [
     'Authorization',
     'Content-Type',

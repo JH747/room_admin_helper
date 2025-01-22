@@ -7,6 +7,7 @@ import com.example.backend_spring.service.TransferRequestService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,9 @@ public class AnalysisController {
     private final TransferRequestService transferRequestService;
     private final UserDetailsService userDetailsService;
     private final JWTUtil jwtUtil;
+
+    @Value("${my.address}")
+    private String analysisServerAddress;
 
     public AnalysisController(TransferRequestService transferRequestService, JWTUtil jwtUtil, UserDetailsService userDetailsService) {
         this.transferRequestService = transferRequestService;
@@ -137,8 +141,8 @@ public class AnalysisController {
         String username = (String) headerAccessor.getSessionAttributes().get("username");
 
 
-        String target_url = String.format("http://localhost:8000/api/processes/?username=%s&start_date=%s&end_date=%s&mode=%s",
-        username, start_date, end_date, mode);
+        String target_url = String.format("%s:8000/api/processes/?username=%s&start_date=%s&end_date=%s&mode=%s",
+        analysisServerAddress, username, start_date, end_date, mode);
         ResponseEntity res = transferRequestService.transferRequest(target_url, HttpMethod.GET, null);
 
         return res.getBody().toString();

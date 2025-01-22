@@ -16,6 +16,8 @@ export default function Page() {
   const [isDataVisible, setIsDataVisible] = useState(false);
   const [client, setClient] = useState(null);
 
+  const addr = process.env.NEXT_PUBLIC_BE_ADDR;
+
   useEffect(() => {
     const connectWebSocket = async () => {
       try {
@@ -26,7 +28,7 @@ export default function Page() {
         }
 
         const stompClient = new Client({
-          brokerURL: 'ws://localhost:8080/ws',
+          brokerURL: `${addr}/ws`,
           connectHeaders: {
             Authorization: `Bearer ${session.token}`, // 토큰 추가
           },

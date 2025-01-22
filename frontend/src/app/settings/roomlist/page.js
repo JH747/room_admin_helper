@@ -13,6 +13,7 @@ export default function Page() {
     yogeiRoomName: '',
     displayOrder: '',
   });
+  const addr = process.env.NEXT_PUBLIC_BE_ADDR;
 
   async function fetchData() {
     const session = await getSession();
@@ -20,25 +21,19 @@ export default function Page() {
       router.push('/errorpages/403');
     }
     // fetch platforms rooms
-    const res1 = await fetch(
-      'http://127.0.0.1:8080/settings/platformsRoomsInfo',
-      {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${session.token}` },
-        withCredentials: true,
-      }
-    );
+    const res1 = await fetch(`${addr}/settings/platformsRoomsInfo`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${session.token}` },
+      withCredentials: true,
+    });
     const data = await res1.json();
     setRooms(data);
     // fetch standard rooms
-    const res2 = await fetch(
-      'http://127.0.0.1:8080/settings/standardRoomsInfo',
-      {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${session.token}` },
-        withCredentials: true,
-      }
-    );
+    const res2 = await fetch(`${addr}/settings/standardRoomsInfo`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${session.token}` },
+      withCredentials: true,
+    });
     const data2 = await res2.json();
     setStandardRooms(data2);
   }
@@ -51,22 +46,19 @@ export default function Page() {
     const session = await getSession();
     console.log(room);
     console.log(session.token);
-    await fetch(
-      'http://127.0.0.1:8080/settings/platformRoomsInfo?delete=true',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({
-          standardRoomName: room.standardRoomName,
-          yapenRoomName: room.yapenRoomName,
-          yogeiRoomName: room.yogeiRoomName,
-          displayOrder: room.displayOrder,
-        }),
-      }
-    );
+    await fetch(`${addr}/platformRoomsInfo?delete=true`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({
+        standardRoomName: room.standardRoomName,
+        yapenRoomName: room.yapenRoomName,
+        yogeiRoomName: room.yogeiRoomName,
+        displayOrder: room.displayOrder,
+      }),
+    });
     fetchData();
   }
 
@@ -78,22 +70,19 @@ export default function Page() {
       newRoom.displayOrder
     ) {
       const session = await getSession();
-      const addRes = await fetch(
-        'http://127.0.0.1:8080/settings/platformsRoomsInfo',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.token}`,
-          },
-          body: JSON.stringify({
-            standardRoomName: newRoom.standardRoomName,
-            yapenRoomName: newRoom.yapenRoomName,
-            yogeiRoomName: newRoom.yogeiRoomName,
-            displayOrder: newRoom.displayOrder,
-          }),
-        }
-      );
+      const addRes = await fetch(`${addr}/settings/platformsRoomsInfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({
+          standardRoomName: newRoom.standardRoomName,
+          yapenRoomName: newRoom.yapenRoomName,
+          yogeiRoomName: newRoom.yogeiRoomName,
+          displayOrder: newRoom.displayOrder,
+        }),
+      });
       if (!addRes.ok) {
         alert('Failed to add room. Check if display order is unique.');
       }

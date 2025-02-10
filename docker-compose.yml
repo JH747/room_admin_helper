@@ -14,6 +14,8 @@ services:
       - NODE_ENV=production
       - NEXTAUTH_SECRET=temp-next-secret-key
       - NEXT_PUBLIC_BE_ADDR=http://localhost:8080
+      - NEXT_PUBLIC_BE_INSIDE_NETWORK_ADDR=http://spring-be:8080
+      - NEXT_PUBLIC_BE_INSIDE_NETWORK_WS_ADDR=ws://spring-be:8080
     # The browser isn't in a container and can't see the Docker-network host names. 
     # This also extends to your front-end application; even if its code is served from a container, the actual application runs in the browser, and outside of Docker. 
     command: ["npm", "run", "start"]

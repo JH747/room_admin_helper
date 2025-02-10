@@ -37,6 +37,8 @@ COPY next.config.mjs ./next.config.mjs
 ENV NODE_ENV=production
 ENV NEXTAUTH_SECRET=temp-next-secret-key
 ENV NEXT_PUBLIC_BE_ADDR=http://localhost:8080
+ENV NEXT_PUBLIC_BE_INSIDE_NETWORK_ADDR=http://spring-be:8080
+ENV NEXT_PUBLIC_BE_INSIDE_NETWORK_WS_ADDR=ws://spring-be:8080
 
 # production 의존성만 설치
 RUN npm ci --omit=dev

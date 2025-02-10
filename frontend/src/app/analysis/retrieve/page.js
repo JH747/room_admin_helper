@@ -18,7 +18,7 @@ export default function Page() {
   const [isChartVisible, setIsChartVisible] = useState(false); // 차트 표시 여부
   const [client, setClient] = useState(null);
 
-  const addr = process.env.NEXT_PUBLIC_BE_ADDR;
+  const addr = process.env.NEXT_PUBLIC_BE_INSIDE_NETWORK_WS_ADDR;
 
   useEffect(() => {
     const connectWebSocket = async () => {

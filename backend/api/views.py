@@ -13,7 +13,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from api.bot import detector, retriever, supply_warner
 from api.models import AppUser, TestEntity
 
-from datetime import datetime
+from datetime import datetime, date
 import threading
 import time
 import json
@@ -122,10 +122,12 @@ def test_view(request):
 
 @api_view(['GET'])
 def processes(request):
-    try:
+    # try:
         username = request.query_params.get('username')
         start_date = datetime.strptime(request.query_params.get('start_date'), '%Y-%m-%d')
+        start_date = date(start_date.year, start_date.month, start_date.day)
         end_date = datetime.strptime(request.query_params.get('end_date'), '%Y-%m-%d')
+        end_date = date(end_date.year, end_date.month, end_date.day)
         mode = request.query_params.get('mode')
         app_user = AppUser.objects.get(username=username)
 
@@ -180,8 +182,8 @@ def processes(request):
         elif mode == 'supply_warn':
             result = supply_warner(app_user=app_user, start_date=start_date, end_date=end_date)
         return JsonResponse(result, safe=False, status=HTTP_200_OK)
-    except Exception as e:
-        return JsonResponse({'message': str(e)}, safe=False, status=HTTP_500_INTERNAL_SERVER_ERROR)
+    # except Exception as e:
+    #     return JsonResponse({'message': str(e)}, safe=False, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 

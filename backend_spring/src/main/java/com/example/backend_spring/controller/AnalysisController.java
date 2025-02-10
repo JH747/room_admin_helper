@@ -116,6 +116,8 @@ public class AnalysisController {
 //        return emitter;
 //    }
 
+    // any ws message published to this endpoint /app/analysis
+    // will be handled and sent to subscribers subscribing /queue/general
     @MessageMapping("/analysis")
     @SendTo("/queue/general")
     public String getAnalysis(Map<String, Object> obj, SimpMessageHeaderAccessor headerAccessor){

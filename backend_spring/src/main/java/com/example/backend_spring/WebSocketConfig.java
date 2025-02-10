@@ -68,7 +68,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/topic", "/queue");
         // 메시지 처리, 가공이 필요한 경우 핸들러를 거쳐가게 할 수 있음
         // 이때 메시지 핸들러로 라우팅되는 prefix
-        registry.setApplicationDestinationPrefixes("/app");
+        registry.setApplicationDestinationPrefixes("/app"); // publishers should use this publishing prefix
     }
 
     // 일반 http request로 pre-handshake authentication을 거친 클라이언트에게만 ws 연결을 허용하는 방식도 있으나 user가 누구인지 전달해야 하므로 기각

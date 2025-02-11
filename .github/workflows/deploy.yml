@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main  # main 브랜치로 푸시될 때 실행
+      - main # main 브랜치로 푸시될 때 실행
 
 jobs:
   # build done by dockerfile
@@ -20,22 +20,33 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          
+
       - name: Build & Push Frontend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest -f ./frontend/Dockerfile .
-          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
-          
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:$(date +%Y%m%d) -f ./frontend/Dockerfile .
+          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:$(date +%Y%m%d)
+
       - name: Build & Push Spring Backend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:latest -f ./backend_spring/Dockerfile .
-          docker push ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:latest
-          
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:$(date +%Y%m%d) -f ./backend_spring/Dockerfile .
+          docker push ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:$(date +%Y%m%d)
+
       - name: Build & Push Django Backend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/django-be-rah:latest -f ./backend/Dockerfile .
-          docker push ${{ secrets.DOCKER_USERNAME }}/django-be-rah:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d) -f ./backend/Dockerfile .
+          docker push ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d)
 
+      - name: copy docker-compose file to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ./docker-compose.yml
+          target: /home/${{ secrets.SERVER_USER }}/rah/docker-compose.yml
+        # run: |
+        #   echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        #   scp -i ${{ secrets.SSH_PRIVATE_KEY }} ./docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/rah/docker-compose.yml
 
   deploy:
     needs: docker
@@ -49,9 +60,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/next-fe-rah:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/django-be-rah:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/next-fe-rah:$(date +%Y%m%d)
+            docker pull ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:$(date +%Y%m%d)
+            docker pull ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d)
             docker-compose down
             docker-compose up -d
-

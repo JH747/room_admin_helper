@@ -19,7 +19,7 @@ RUN apt update && apt install -y \
 
 
 # Python 패키지 설치를 위해 필요한 파일 복사
-COPY requirements.txt .
+COPY ./backend/requirements.txt .
 #COPY . .
 
 # Python 패키지 설치
@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 ## production stage
 
 # 프로젝트 코드 복사
-COPY . .
+COPY ./backend .
 
 # 정적 파일 수집
 RUN python manage.py collectstatic --noinput

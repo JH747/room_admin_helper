@@ -5,7 +5,7 @@ FROM openjdk:17-jdk-alpine AS builder
 WORKDIR /app
 
 # Copy all files from the current directory to the working directory
-COPY . .
+COPY ./backend_spring .
 
 # jar 파일 생성
 RUN ./gradlew build -x test

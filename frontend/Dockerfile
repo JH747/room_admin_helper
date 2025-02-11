@@ -7,7 +7,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copy all files from the current directory to the working directory
-COPY . .
+COPY ./frontend .
 
 # Install dependencies
 # RUN npm install
@@ -28,10 +28,10 @@ WORKDIR /app
 COPY --from=builder /app/.next ./.next
 
 # 필요한 파일만 복사 
-COPY package.json ./package.json
-COPY package-lock.json ./package-lock.json
+COPY ./frontend/package.json ./package.json
+COPY ./frontend/package-lock.json ./package-lock.json
 # COPY node_modules ./node_modules # npm ci 에서 생성될 것 
-COPY next.config.mjs ./next.config.mjs
+COPY ./frontend/next.config.mjs ./next.config.mjs
 
 # Set environment variable to indicate production mode
 ENV NODE_ENV=production

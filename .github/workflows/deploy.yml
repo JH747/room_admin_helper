@@ -64,6 +64,6 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/next-fe-rah:$(date +%Y%m%d)
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:$(date +%Y%m%d)
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d)
-            chmod 777 ~/rah/docker-compose.yml
-            docker compose -f ~/rah/docker-compose.yml down
-            docker compose -f ~/rah/docker-compose.yml up -d
+            sudo docker compose -f ~/rah/docker-compose.yml down
+            sudo docker rmi $(sudo docker images -q)
+            sudo docker compose -f ~/rah/docker-compose.yml up -d

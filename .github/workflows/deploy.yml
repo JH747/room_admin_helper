@@ -36,17 +36,18 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d) -f ./backend/Dockerfile .
           docker push ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d)
 
-      - name: copy docker-compose file to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./docker-compose.yml
-          target: /home/${{ secrets.SERVER_USER }}/rah/docker-compose.yml
-        # run: |
-        #   echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        #   scp -i ${{ secrets.SSH_PRIVATE_KEY }} ./docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/rah/docker-compose.yml
+  # 민감한 정보가 있으므로 이 부분은 수동 진행해둘 것
+  # - name: copy docker-compose file to server
+  #   uses: appleboy/scp-action@v0.1.7
+  #   with:
+  #     host: ${{ secrets.SERVER_IP }}
+  #     username: ${{ secrets.SERVER_USER }}
+  #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #     source: ./docker-compose.yml
+  #     target: /home/${{ secrets.SERVER_USER }}/rah
+  # run: |
+  #   echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+  #   scp -i ${{ secrets.SSH_PRIVATE_KEY }} ./docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/rah/docker-compose.yml
 
   deploy:
     needs: docker
@@ -60,8 +61,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/next-fe-rah:$(date +%Y%m%d)
-            docker pull ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:$(date +%Y%m%d)
-            docker pull ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d)
-            docker-compose down
-            docker-compose up -d
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/next-fe-rah:$(date +%Y%m%d)
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:$(date +%Y%m%d)
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d)
+            chmod 777 ~/rah/docker-compose.yml
+            docker compose -f ~/rah/docker-compose.yml down
+            docker compose -f ~/rah/docker-compose.yml up -d

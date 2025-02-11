@@ -61,6 +61,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/next-fe-rah:$(date +%Y%m%d)
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:$(date +%Y%m%d)
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d)

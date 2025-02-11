@@ -23,8 +23,8 @@ jobs:
 
       - name: Build & Push Frontend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:$(date +%Y%m%d) -f ./frontend/Dockerfile .
-          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:$(date +%Y%m%d)
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/next-fe-rah:$(date +%Y%m%d) -f ./frontend/Dockerfile .
+          docker push ${{ secrets.DOCKER_USERNAME }}/next-fe-rah:$(date +%Y%m%d)
 
       - name: Build & Push Spring Backend Image
         run: |
@@ -37,7 +37,7 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d)
 
       - name: copy docker-compose file to server
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}

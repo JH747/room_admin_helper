@@ -8,6 +8,7 @@ WORKDIR /app
 COPY ./backend_spring .
 
 # jar 파일 생성
+RUN chmod +x ./gradlew
 RUN ./gradlew build -x test
 
 

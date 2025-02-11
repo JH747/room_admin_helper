@@ -21,11 +21,6 @@ export default function SessionProviderWrapper({ children }) {
                 About
               </a>
             </li>
-            <li>
-              <a href="/contact" className="hover:underline">
-                Contact
-              </a>
-            </li>
           </ul>
         </nav>
       </header>

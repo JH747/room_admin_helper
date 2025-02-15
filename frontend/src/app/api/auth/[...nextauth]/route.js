@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { signOut } from 'next-auth/react';
 
 const authOptions = {
   providers: [
@@ -51,6 +52,7 @@ const authOptions = {
   },
   pages: {
     signIn: '/auth/signin',
+    signOut: '/',
   },
   session: {
     strategy: 'jwt',

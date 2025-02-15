@@ -62,9 +62,10 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            sudo docker rmi $(sudo docker images -q)
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/next-fe-rah:$(date +%Y%m%d)
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/spring-be-rah:$(date +%Y%m%d)
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/django-be-rah:$(date +%Y%m%d)
+            sudo docker pull redis:7.2
             sudo docker compose -f ~/rah/docker-compose.yml down
-            sudo docker rmi $(sudo docker images -q)
             sudo docker compose -f ~/rah/docker-compose.yml up -d

@@ -4,10 +4,12 @@ export async function GET(request) {
   const end_date = searchParams.get('end_date');
   const mode = searchParams.get('mode');
 
+  const addr = process.env.NEXT_PUBLIC_BE_ADDR;
+
   try {
     const clientAuthHeader = request.headers.get('Authorization');
     const djangoResponse = await fetch(
-      `http://127.0.0.1:8080/analysis/general?start_date=${start_date}&end_date=${end_date}&mode=${mode}`,
+      `${addr}/analysis/general?start_date=${start_date}&end_date=${end_date}&mode=${mode}`,
       {
         method: 'GET',
         headers: {

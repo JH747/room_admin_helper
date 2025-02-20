@@ -16,7 +16,7 @@ export default function Page() {
   const [isDataVisible, setIsDataVisible] = useState(false);
   const [client, setClient] = useState(null);
 
-  const addr = process.env.NEXT_PUBLIC_BE_INSIDE_NETWORK_WS_ADDR;
+  const addr = process.env.NEXT_PUBLIC_BE_WS_ADDR;
 
   useEffect(() => {
     const connectWebSocket = async () => {

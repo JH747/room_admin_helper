@@ -36,10 +36,8 @@ COPY ./frontend/next.config.mjs ./next.config.mjs
 # Set environment variable to indicate production mode
 ENV NODE_ENV=production
 ENV NEXTAUTH_SECRET=temp-next-secret-key
-ENV NEXT_PUBLIC_BE_ADDR=http://localhost:8080
-ENV NEXT_PUBLIC_BE_INSIDE_NETWORK_ADDR=http://spring-be:8080
-ENV NEXT_PUBLIC_BE_INSIDE_NETWORK_WS_ADDR=ws://spring-be:8080
-
+ENV NEXT_PUBLIC_BE_ADDR=http://ec2-3-39-106-241.ap-northeast-2.compute.amazonaws.com:8080
+ENV NEXT_PUBLIC_BE_WS_ADDR=ws://ec2-3-39-106-241.ap-northeast-2.compute.amazonaws.com:8080
 # production 의존성만 설치
 RUN npm ci --omit=dev
 
